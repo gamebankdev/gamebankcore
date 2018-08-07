@@ -1,0 +1,8 @@
+#ifndef GAMEBANK_HARDFORK_0_1
+#define GAMEBANK_HARDFORK_0_1 1
+
+#define GAMEBANK_HARDFORK_0_1_TIME 1597970800 // Future 2020...
+
+#define GAMEBANK_HARDFORK_0_1_VERSION hardfork_version( 0, 1 )
+
+#endif

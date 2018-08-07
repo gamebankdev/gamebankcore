@@ -1,0 +1,14 @@
+#include <stdint.h>
+#include <gamebank/utilities/git_revision.hpp>
+
+#define GAMEBANK_GIT_REVISION_SHA "@GAMEBANK_GIT_REVISION_SHA@"
+#define GAMEBANK_GIT_REVISION_UNIX_TIMESTAMP @GAMEBANK_GIT_REVISION_UNIX_TIMESTAMP@
+#define GAMEBANK_GIT_REVISION_DESCRIPTION "@GAMEBANK_GIT_REVISION_DESCRIPTION@"
+
+namespace gamebank { namespace utilities {
+
+const char* const git_revision_sha = GAMEBANK_GIT_REVISION_SHA;
+const uint32_t git_revision_unix_timestamp = GAMEBANK_GIT_REVISION_UNIX_TIMESTAMP;
+const char* const git_revision_description = GAMEBANK_GIT_REVISION_DESCRIPTION;
+
+} } // end namespace gamebank::utilities
