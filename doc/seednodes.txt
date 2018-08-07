@@ -1,0 +1,1 @@
+seed.gb.cool:2001          # gamebank
