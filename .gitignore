@@ -8,15 +8,11 @@ hardfork.hpp
 
 lcov
 
-libraries/wallet/Doxyfile
-libraries/wallet/doxygen
-
 programs/cli_wallet/cli_wallet
 programs/gamebankd/gamebankd
 programs/gamebankd/test
 programs/util/get_dev_key
 
-doxygen
 
 build
 
