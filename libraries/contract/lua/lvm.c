@@ -801,7 +801,7 @@ void luaV_execute (lua_State *L) {
     Instruction i;
     StkId ra;
     vmfetch();
-	if( ++L->extend.current_opcode_execute_count >= L->extend.opcode_execute_limit )
+	if( ++L->extend.current_opcode_execute_count >= L->extend.opcode_execute_limit && L->extend.opcode_execute_limit > 0)
 		vmbreak;
 	if (L->extend.force_stop)
 		vmbreak;

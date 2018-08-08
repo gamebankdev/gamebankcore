@@ -17,7 +17,7 @@ namespace gamebank { namespace contract {
 
 		virtual bool call_method(const std::string& method, const variants& args, std::string& result);
 	
-	private:
+		void save_modified_data();
 
 	private:
 		lua_State* L = nullptr;

@@ -336,13 +336,13 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   }
   // init lua_Extend
   L->extend.current_opcode_execute_count = 0;
-  L->extend.force_stop = false;
+  L->extend.force_stop = 0;
   L->extend.memory_limit = 0;
   L->extend.opcode_execute_limit = 0;
   L->extend.opcode_limit = 0;
   memset(L->extend.contract_name, 0, sizeof(L->extend.contract_name));
   memset(L->extend.caller_name, 0, sizeof(L->extend.caller_name));
-  L->extend.pointer = nullptr;
+  L->extend.pointer = NULL;
   return L;
 }
 

@@ -6,6 +6,7 @@
 namespace gamebank { namespace contract {
 
 	using gamebank::protocol::account_name_type;
+	using fc::variant;
 	using fc::variants;
 
 	class contract_interface {

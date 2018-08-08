@@ -97,8 +97,8 @@ void *luaM_realloc_ (lua_State *L, void *block, size_t osize, size_t nsize) {
   lua_assert((nsize == 0) == (newblock == NULL));
   g->GCdebt = (g->GCdebt + nsize) - realosize;
   int mem_count = cast_int(gettotalbytes(g) >> 10) + (cast_int(gettotalbytes(g) & 0x3ff) / 1024);
-  printf("mem_count=%dK\n", mem_count);
-  if (mem_count >= L->extend.memory_limit)
+  //printf("mem_count=%dK\n", mem_count);
+  if (L->extend.memory_limit > 0 && mem_count >= L->extend.memory_limit)
 	  return NULL;
   return newblock;
 }

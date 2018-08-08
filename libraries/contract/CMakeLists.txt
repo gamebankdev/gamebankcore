@@ -1,6 +1,7 @@
 file(GLOB HEADERS "include/contract/*.hpp" "include/contract/lua/*.h")
 
 set(SOURCES contract_lua.cpp
+			contract_lualib.cpp
 			lua/lapi.c
 			lua/lauxlib.c
 			lua/lbaselib.c
@@ -34,6 +35,9 @@ set(SOURCES contract_lua.cpp
 			lua/lutf8lib.c
 			lua/lvm.c
 			lua/lzio.c
+			lua/fpconv.c
+			lua/lua_cjson.c
+			lua/strbuf.c
 			)
 
 add_library( contract ${SOURCES} ${HEADERS} )
