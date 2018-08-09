@@ -3,7 +3,7 @@
 #include <gamebank/protocol/types.hpp>
 #include <fc/variant.hpp>
 
-namespace gamebank { namespace contract {
+namespace gamebank { namespace plugins { namespace contract {
 
 	using gamebank::protocol::account_name_type;
 	using fc::variant;
@@ -21,4 +21,4 @@ namespace gamebank { namespace contract {
 		account_name_type name;
 	};
 
-}}
+}}}

@@ -1,6 +1,10 @@
 #include <gamebank/plugins/contract/contract_lua.hpp>
 #include <fc/log/logger.hpp>
 #include <gamebank/plugins/contract/contract_lualib.hpp>
+#include <gamebank/plugins/chain/chain_plugin.hpp>
+#include <appbase/application.hpp>
+#include <gamebank/plugins/contract/contract_object.hpp>
+#include <gamebank/plugins/contract/contract_user_object.hpp>
 
 extern "C"
 {
@@ -13,7 +17,7 @@ extern "C"
 #include "gamebank/plugins/contract/lua/lua_cjson.h"
 }
 
-namespace gamebank { namespace contract {
+namespace gamebank { namespace plugins { namespace contract {
 
 	lua_State* create_lua_state()
 	{
@@ -151,24 +155,43 @@ namespace gamebank { namespace contract {
 	void contract_lua::save_modified_data()
 	{
 		//printf("save_modified_data\n" );
+		chain::database& db = appbase::app().get_plugin< gamebank::plugins::chain::chain_plugin >().db();
 		lua_getglobal(L, "_modified_data");
-		assert(lua_istable(L, -1));
+		FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
 		lua_pushnil(L);
 		while (lua_next(L, -2) != 0) {
 			/* table, key, value */
 			int keytype = lua_type(L, -2);
 			int valuetype = lua_type(L, -1);
-			assert(keytype == LUA_TSTRING);
-			assert(valuetype == LUA_TTABLE);
+			FC_ASSERT(keytype == LUA_TSTRING, "key must be string");
+			FC_ASSERT(valuetype == LUA_TTABLE, "key must be table");
 
 			const char* key = lua_tostring(L, -2);
-			std::string filename = std::string(key) + ".json";
+			std::string user_name(key);
 			int datalen = 0;
 			char* json = json_encode_tostring(L, &datalen);
-			// todo: save json to database
+			FC_ASSERT((json != nullptr) && (datalen > 0), "get user data from lua error");
+
+			auto contract_data = db.find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
+			if (contract_data == nullptr) {
+				db.create< contract_user_object >([&](contract_user_object& obj)
+				{
+					obj.contract_name = string(L->extend.contract_name);
+					obj.user_name = user_name;
+					from_string(obj.data, json);
+					obj.created = db.head_block_time();
+					obj.last_update = obj.created;
+				});
+			} else {
+				db.modify(*contract_data, [&](contract_user_object& obj)
+				{
+					from_string(obj.data, json);
+					obj.last_update = obj.created;
+				});
+			}
 
 			lua_pop(L, 1);
 		}
 	}
 
-}}
+}}}

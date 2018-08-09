@@ -1,5 +1,9 @@
 #include <gamebank/plugins/contract/contract_lualib.hpp>
 #include <fc/log/logger.hpp>
+#include <gamebank/plugins/chain/chain_plugin.hpp>
+#include <appbase/application.hpp>
+#include <gamebank/plugins/contract/contract_object.hpp>
+#include <gamebank/plugins/contract/contract_user_object.hpp>
 
 extern "C"
 {
@@ -11,6 +15,8 @@ extern "C"
 #include "gamebank/plugins/contract/lua/lopcodes.h"
 #include "gamebank/plugins/contract/lua/lua_cjson.h"
 }
+
+namespace gamebank { namespace plugins { namespace contract {
 
 static int contract_get_name(lua_State *L) {
 	lua_pushstring(L, L->extend.contract_name);
@@ -27,18 +33,22 @@ static int contract_get_data(lua_State *L) {
 	{
 		return 0;
 	}
-	std::string data = "{}"; // read from database
+	const char* user_name = L->extend.contract_name;
+	// todo: check is load in lua?
+	chain::database& db = appbase::app().get_plugin< gamebank::plugins::chain::chain_plugin >().db();
+	auto contract_data = db.find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
+	std::string data = contract_data ? to_string(contract_data->data) : "{}";
 	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
 
 	int check_top = lua_gettop(L);
 	lua_getglobal(L, "_modified_data");
-	assert(lua_istable(L, -1));
-	lua_pushstring(L, L->extend.contract_name);
-	lua_pushvalue(L, -3 ); // push datatable to top
+	FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
+	lua_pushstring(L, user_name);
+	lua_pushvalue(L, -3); // push datatable to top
 	lua_rawset(L, -3); // _modified_data[contract_name] = datatable
 	lua_pop(L, 1);
 	int check_top2 = lua_gettop(L);
-	assert(check_top == check_top2);
+	FC_ASSERT(check_top == check_top2, "lua stack error");
 
 	return ret;
 }
@@ -57,8 +67,23 @@ static int contract_get_user_data(lua_State *L) {
 	{
 		return 0;
 	}
-	std::string data = "{}"; // read from database
-	return json_decode_fromstring(L, data.c_str(), data.length());
+	// todo: check is load in lua?
+	chain::database& db = appbase::app().get_plugin< gamebank::plugins::chain::chain_plugin >().db();
+	auto contract_data = db.find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
+	std::string data = contract_data ? to_string(contract_data->data) : "{}";
+	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
+
+	int check_top = lua_gettop(L);
+	lua_getglobal(L, "_modified_data");
+	FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
+	lua_pushstring(L, user_name);
+	lua_pushvalue(L, -3); // push datatable to top
+	lua_rawset(L, -3); // _modified_data[contract_name] = datatable
+	lua_pop(L, 1);
+	int check_top2 = lua_gettop(L);
+	FC_ASSERT(check_top == check_top2, "lua stack error");
+
+	return ret;
 }
 
 static int contract_transfer(lua_State *L) {
@@ -100,7 +125,6 @@ LUALIB_API void luaL_openlibs_contract(lua_State *L) {
 		luaL_requiref(L, lib->name, lib->func, 1);
 		lua_pop(L, 1);  /* remove lib */
 	}
-
-	
 }
 
+}}}
