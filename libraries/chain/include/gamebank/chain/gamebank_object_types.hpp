@@ -70,7 +70,9 @@ enum object_type
    crowdfunding_content_object_type,
    crowdfunding_invest_object_type,
    nonfungible_fund_object_type,
-   nonfungible_fund_on_sale_object_type
+   nonfungible_fund_on_sale_object_type,
+   contract_object_type,
+   contract_user_object_type
 };
 
 class dynamic_global_property_object;
@@ -107,6 +109,8 @@ class crowdfunding_content_object;
 class crowdfunding_invest_object;
 class nonfungible_fund_object;
 class nonfungible_fund_on_sale_object;
+class contract_object;
+class contract_user_object;
 
 typedef oid< dynamic_global_property_object         > dynamic_global_property_id_type;
 typedef oid< account_object                         > account_id_type;
@@ -238,6 +242,8 @@ FC_REFLECT_ENUM( gamebank::chain::object_type,
                  (crowdfunding_invest_object_type)
                  (nonfungible_fund_object_type)
                  (nonfungible_fund_on_sale_object_type)
+				 (contract_object_type)
+	             (contract_user_object_type)
 
                )
 

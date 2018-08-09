@@ -2619,7 +2619,7 @@ void database::initialize_indexes()
    add_core_index< crowdfunding_content_index              >(*this);
    add_core_index< crowdfunding_invest_index               >(*this);
    add_core_index< nonfungible_fund_index				   >(*this);
-   add_core_index< nonfungible_fund_on_sale_index				   >(*this);
+   add_core_index< nonfungible_fund_on_sale_index          >(*this);
 
    _plugin_index_signal();
 }
