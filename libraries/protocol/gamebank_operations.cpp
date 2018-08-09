@@ -703,6 +703,25 @@ namespace gamebank { namespace protocol {
        FC_ASSERT( fund_id > 0, "fund_id is zero" );
 
        validate_account_name( buyer );
-   }  
+   }
+
+   void contract_deploy_operation::validate()const
+   {
+	   validate_account_name(creator);
+	   FC_ASSERT(code.size() > 0, "code is empty");
+	   FC_ASSERT(code.size() < 1024*1024, "code larger than size limit");
+	   FC_ASSERT(abi.size() > 0, "abi is empty");
+	   FC_ASSERT(abi.size() < 1024 * 64, "abi larger than size limit");
+   }
+
+   void contract_call_operation::validate()const
+   {
+	   validate_account_name(contract_name);
+	   validate_account_name(caller);
+	   FC_ASSERT(method.size() > 0, "method is empty");
+	   FC_ASSERT(method.size() < 256, "method larger than size limit");
+	   FC_ASSERT(args.size() > 0, "args is empty");
+	   FC_ASSERT(args.size() < 1024 * 64, "args larger than size limit");
+   }
 
 } } // gamebank::protocol

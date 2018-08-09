@@ -2424,5 +2424,22 @@ void nonfungible_fund_buy_evaluator::do_apply( const nonfungible_fund_buy_operat
        }  FC_CAPTURE_AND_RETHROW((op))
 }
 
+void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
+{
+	try {
+		const auto& creator = _db.get_account(op.creator);
+		auto contract_data = _db.find<contract_object, by_name>(op.creator);
+		FC_ASSERT(contract_data == nullptr, "has exist contract");
+
+	}  FC_CAPTURE_AND_RETHROW((op))
+}
+
+void contract_call_evaluator::do_apply(const contract_call_operation& op)
+{
+	try {
+
+	}  FC_CAPTURE_AND_RETHROW((op))
+}
+
 
 } } // gamebank::chain

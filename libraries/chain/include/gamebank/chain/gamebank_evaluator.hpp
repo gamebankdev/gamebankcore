@@ -59,4 +59,7 @@ GAMEBANK_DEFINE_EVALUATOR( nonfungible_fund_put_up_for_sale )
 GAMEBANK_DEFINE_EVALUATOR( nonfungible_fund_withdraw_from_sale )
 GAMEBANK_DEFINE_EVALUATOR( nonfungible_fund_buy )
 
+GAMEBANK_DEFINE_EVALUATOR( contract_deploy )
+GAMEBANK_DEFINE_EVALUATOR( contract_call )
+
 } } // gamebank::chain

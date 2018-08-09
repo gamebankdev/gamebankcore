@@ -18,6 +18,8 @@
 #include <gamebank/chain/witness_schedule.hpp>
 #include <gamebank/chain/nonfungible_fund_object.hpp>
 #include <gamebank/chain/nonfungible_fund_on_sale_object.hpp>
+#include <gamebank/chain/contract/contract_object.hpp>
+#include <gamebank/chain/contract/contract_user_object.hpp>
 
 #include <gamebank/chain/util/asset.hpp>
 #include <gamebank/chain/util/reward.hpp>
@@ -2564,9 +2566,11 @@ void database::initialize_evaluators()
    _my->_evaluator_registry.register_evaluator< invest_evaluator                         >();
    _my->_evaluator_registry.register_evaluator< nonfungible_fund_create_evaluator        >();
    _my->_evaluator_registry.register_evaluator< nonfungible_fund_transfer_evaluator		 >();
-   _my->_evaluator_registry.register_evaluator< nonfungible_fund_put_up_for_sale_evaluator        >();
-   _my->_evaluator_registry.register_evaluator< nonfungible_fund_withdraw_from_sale_evaluator		 >();
-   _my->_evaluator_registry.register_evaluator< nonfungible_fund_buy_evaluator		 >();
+   _my->_evaluator_registry.register_evaluator< nonfungible_fund_put_up_for_sale_evaluator		>();
+   _my->_evaluator_registry.register_evaluator< nonfungible_fund_withdraw_from_sale_evaluator	>();
+   _my->_evaluator_registry.register_evaluator< nonfungible_fund_buy_evaluator		     >();
+   _my->_evaluator_registry.register_evaluator< contract_deploy_evaluator				 >();
+   _my->_evaluator_registry.register_evaluator< contract_call_evaluator					 >();
 }
 
 
@@ -2620,6 +2624,8 @@ void database::initialize_indexes()
    add_core_index< crowdfunding_invest_index               >(*this);
    add_core_index< nonfungible_fund_index				   >(*this);
    add_core_index< nonfungible_fund_on_sale_index          >(*this);
+   add_core_index< contract_object_index				   >(*this);
+   add_core_index< contract_user_object_index			   >(*this);
 
    _plugin_index_signal();
 }

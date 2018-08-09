@@ -1,12 +1,13 @@
 #pragma once
 
 #include <gamebank/chain/gamebank_object_types.hpp>
+#include <gamebank/protocol/types.hpp>
 
 
-namespace gamebank { namespace plugins { namespace contract {
+namespace gamebank { namespace chain {
 
 using namespace std;
-using namespace gamebank::chain;
+using namespace gamebank::protocol;
 
 class contract_object : public object < contract_object_type, contract_object >
 {
@@ -23,7 +24,7 @@ public:
 	id_type           id;
 
 	account_name_type creator;
-	digest_type	   version;
+	digest_type		  version;
 	shared_string     code;			/// contract code
 	shared_string     abi;			/// abi data
 
@@ -45,12 +46,12 @@ typedef multi_index_container<
 	allocator< contract_object >
 > contract_object_index;
 
-}}} // gamebank::plugins::contract
+}} // gamebank::chain
 
-FC_REFLECT( gamebank::plugins::contract::contract_object,
+FC_REFLECT( gamebank::chain::contract_object,
              (id)(creator)(version)
              (code)(abi)
              (last_update)(created)
           )
 
-CHAINBASE_SET_INDEX_TYPE( gamebank::plugins::contract::contract_object, gamebank::plugins::contract::contract_object_index)
+CHAINBASE_SET_INDEX_TYPE( gamebank::chain::contract_object, gamebank::chain::contract_object_index)

@@ -4,10 +4,9 @@
 #include <gamebank/chain/gamebank_object_types.hpp>
 
 
-namespace gamebank { namespace plugins { namespace contract {
+namespace gamebank { namespace chain {
 
 using namespace std;
-using namespace gamebank::chain;
 
 class contract_user_object : public object < contract_user_object_type, contract_user_object >
 {
@@ -49,12 +48,12 @@ typedef multi_index_container<
 > contract_user_object_index;
 
 
-}}}// gamebank::plugins::contract
+}}// gamebank::chain
 
-FC_REFLECT( gamebank::plugins::contract::contract_user_object,
+FC_REFLECT( gamebank::chain::contract_user_object,
              (id)(contract_name)(user_name)
              (data)
              (last_update)(created)
           )
 
-CHAINBASE_SET_INDEX_TYPE( gamebank::plugins::contract::contract_user_object, gamebank::plugins::contract::contract_user_object_index)
+CHAINBASE_SET_INDEX_TYPE( gamebank::chain::contract_user_object, gamebank::chain::contract_user_object_index)

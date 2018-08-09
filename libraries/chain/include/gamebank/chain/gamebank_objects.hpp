@@ -465,6 +465,8 @@ namespace gamebank { namespace chain {
 #include <gamebank/chain/nonfungible_fund_on_sale_object.hpp>
 #include <gamebank/chain/comment_object.hpp>
 #include <gamebank/chain/account_object.hpp>
+#include <gamebank/chain/contract/contract_object.hpp>
+#include <gamebank/chain/contract/contract_user_object.hpp>
 
 FC_REFLECT( gamebank::chain::limit_order_object,
              (id)(created)(expiration)(seller)(orderid)(for_sale)(sell_price) )

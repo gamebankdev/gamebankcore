@@ -1,23 +1,21 @@
-#include <gamebank/plugins/contract/contract_lua.hpp>
+#include <gamebank/chain/contract/contract_lua.hpp>
 #include <fc/log/logger.hpp>
-#include <gamebank/plugins/contract/contract_lualib.hpp>
-#include <gamebank/plugins/chain/chain_plugin.hpp>
-#include <appbase/application.hpp>
-#include <gamebank/plugins/contract/contract_object.hpp>
-#include <gamebank/plugins/contract/contract_user_object.hpp>
+#include <gamebank/chain/contract/contract_lualib.hpp>
+#include <gamebank/chain/contract/contract_object.hpp>
+#include <gamebank/chain/contract/contract_user_object.hpp>
 
 extern "C"
 {
-#include "gamebank/plugins/contract/lua/lua.h"
-#include "gamebank/plugins/contract/lua/lualib.h"
-#include "gamebank/plugins/contract/lua/lauxlib.h"
-#include "gamebank/plugins/contract/lua/lobject.h"
-#include "gamebank/plugins/contract/lua/lstate.h"
-#include "gamebank/plugins/contract/lua/lopcodes.h"
-#include "gamebank/plugins/contract/lua/lua_cjson.h"
+#include "gamebank/chain/contract/lua/lua.h"
+#include "gamebank/chain/contract/lua/lualib.h"
+#include "gamebank/chain/contract/lua/lauxlib.h"
+#include "gamebank/chain/contract/lua/lobject.h"
+#include "gamebank/chain/contract/lua/lstate.h"
+#include "gamebank/chain/contract/lua/lopcodes.h"
+#include "gamebank/chain/contract/lua/lua_cjson.h"
 }
 
-namespace gamebank { namespace plugins { namespace contract {
+namespace gamebank { namespace chain {
 
 	lua_State* create_lua_state()
 	{
@@ -155,7 +153,7 @@ namespace gamebank { namespace plugins { namespace contract {
 	void contract_lua::save_modified_data()
 	{
 		//printf("save_modified_data\n" );
-		chain::database& db = appbase::app().get_plugin< gamebank::plugins::chain::chain_plugin >().db();
+		//chain::database& db = appbase::app().get_plugin< gamebank::plugins::chain::chain_plugin >().db();
 		lua_getglobal(L, "_modified_data");
 		FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
 		lua_pushnil(L);
@@ -172,26 +170,26 @@ namespace gamebank { namespace plugins { namespace contract {
 			char* json = json_encode_tostring(L, &datalen);
 			FC_ASSERT((json != nullptr) && (datalen > 0), "get user data from lua error");
 
-			auto contract_data = db.find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
-			if (contract_data == nullptr) {
-				db.create< contract_user_object >([&](contract_user_object& obj)
-				{
-					obj.contract_name = string(L->extend.contract_name);
-					obj.user_name = user_name;
-					from_string(obj.data, json);
-					obj.created = db.head_block_time();
-					obj.last_update = obj.created;
-				});
-			} else {
-				db.modify(*contract_data, [&](contract_user_object& obj)
-				{
-					from_string(obj.data, json);
-					obj.last_update = obj.created;
-				});
-			}
+			//auto contract_data = db.find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
+			//if (contract_data == nullptr) {
+			//	db.create< contract_user_object >([&](contract_user_object& obj)
+			//	{
+			//		obj.contract_name = string(L->extend.contract_name);
+			//		obj.user_name = user_name;
+			//		from_string(obj.data, json);
+			//		obj.created = db.head_block_time();
+			//		obj.last_update = obj.created;
+			//	});
+			//} else {
+			//	db.modify(*contract_data, [&](contract_user_object& obj)
+			//	{
+			//		from_string(obj.data, json);
+			//		obj.last_update = obj.created;
+			//	});
+			//}
 
 			lua_pop(L, 1);
 		}
 	}
 
-}}}
+}}

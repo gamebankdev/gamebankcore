@@ -1049,6 +1049,35 @@ namespace gamebank { namespace protocol {
       void  get_required_active_authorities( flat_set<account_name_type>& a )const{ a.insert(buyer); }
    };
 
+   /**
+   *
+   * @brief deploy a new contract
+   */
+   struct contract_deploy_operation : public base_operation
+   {
+	   account_name_type creator;
+	   string            code;
+	   string            abi;
+
+	   void              validate()const;
+	   void get_required_active_authorities(flat_set<account_name_type>& a)const { a.insert(creator); }
+   };
+
+   /**
+   *
+   * @brief call contract's method
+   */
+   struct contract_call_operation : public base_operation
+   {
+	   account_name_type contract_name;
+	   account_name_type caller;
+	   string            method;
+	   string            args;
+
+	   void              validate()const;
+	   void get_required_active_authorities(flat_set<account_name_type>& a)const { a.insert(caller); }
+   };
+
 
 } } // gamebank::protocol
 
@@ -1154,4 +1183,7 @@ FC_REFLECT( gamebank::protocol::nonfungible_fund_transfer_operation, (from)(to)(
 FC_REFLECT( gamebank::protocol::nonfungible_fund_put_up_for_sale_operation, (seller)(fund_id)(selling_price)(expiration) );
 FC_REFLECT( gamebank::protocol::nonfungible_fund_withdraw_from_sale_operation, (seller)(fund_id) );
 FC_REFLECT( gamebank::protocol::nonfungible_fund_buy_operation, (buyer)(fund_id) );
+
+FC_REFLECT(gamebank::protocol::contract_deploy_operation, (creator)(code)(abi));
+FC_REFLECT(gamebank::protocol::contract_call_operation, (contract_name)(caller)(method)(args));
 

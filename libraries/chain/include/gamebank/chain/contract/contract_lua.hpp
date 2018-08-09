@@ -6,7 +6,7 @@ extern "C"
 #include "lua/lua.h"
 }
 
-namespace gamebank { namespace plugins { namespace contract {
+namespace gamebank { namespace chain {
 
 	class contract_lua : public contract_interface {
 	public:
@@ -24,4 +24,4 @@ namespace gamebank { namespace plugins { namespace contract {
 
 	};
 
-}}}
+}}

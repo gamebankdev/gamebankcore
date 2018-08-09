@@ -71,6 +71,8 @@ namespace gamebank { namespace protocol {
 			nonfungible_fund_put_up_for_sale_operation,
 			nonfungible_fund_withdraw_from_sale_operation,
 			nonfungible_fund_buy_operation,
+	        contract_deploy_operation,
+	        contract_call_operation,
 
             /// virtual operations below this point
             fill_convert_request_operation,
