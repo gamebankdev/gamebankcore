@@ -81,6 +81,9 @@ namespace gamebank { namespace chain {
                   {
                      index_stream.close();
                      index_stream.open( index_file.generic_string().c_str(), LOG_WRITE );
+#ifdef _WIN32
+					 index_stream.seekg(0, std::ios::end);//windows版本时，有时这个文件指向不是末尾，这里把文件指向末尾(linux下没出现过这个问题)
+#endif
                      index_write = true;
                   }
                }
