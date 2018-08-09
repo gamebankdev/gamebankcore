@@ -2352,7 +2352,7 @@ void nonfungible_fund_transfer_evaluator::do_apply(const nonfungible_fund_transf
 
         //check if the fund is on sale
         auto * on_sale_obj = _db.find< nonfungible_fund_on_sale_object, by_fund_id >(op.fund_id);
-        FC_ASSERT(on_sale_obj == NULL, "the fund is on sale");
+        FC_ASSERT(on_sale_obj == nullptr, "the fund is on sale");
 
 		_db.modify(nfo, [&](nonfungible_fund_object& o)
 		{
@@ -2376,7 +2376,7 @@ void nonfungible_fund_put_up_for_sale_evaluator::do_apply( const nonfungible_fun
     
     //check if the fund is on sale
     auto * on_sale_obj = _db.find< nonfungible_fund_on_sale_object, by_fund_id >(op.fund_id);
-    FC_ASSERT(on_sale_obj == NULL, "the fund is on sale");
+    FC_ASSERT(on_sale_obj == nullptr, "the fund is on sale");
     
      _db.create<nonfungible_fund_on_sale_object>( [&]( nonfungible_fund_on_sale_object& obj )
      {
