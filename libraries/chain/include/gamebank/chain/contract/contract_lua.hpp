@@ -1,12 +1,10 @@
 #pragma once
 
-#include "contract_interface.hpp"
-extern "C"
-{
-#include "lua/lua.h"
-}
+#include <gamebank/chain/contract/contract_interface.hpp>
 
 namespace gamebank { namespace chain {
+
+	namespace detail { class contract_lua_impl; }
 
 	class contract_lua : public contract_interface {
 	public:
@@ -17,10 +15,8 @@ namespace gamebank { namespace chain {
 
 		virtual bool call_method(const std::string& method, const variants& args, std::string& result);
 
-		void save_modified_data();
-
 	private:
-		lua_State * L = nullptr;
+		std::unique_ptr< detail::contract_lua_impl > my;
 
 	};
 
