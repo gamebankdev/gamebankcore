@@ -114,7 +114,7 @@ namespace gamebank { namespace chain {
           */
          uint32_t vote_power_reserve_rate = GAMEBANK_INITIAL_VOTE_POWER_RATE;
 
-         uint32_t delegation_return_period = GAMEBANK_DELEGATION_RETURN_PERIOD_HF0;
+         uint32_t delegation_return_period = GAMEBANK_DELEGATION_RETURN_PERIOD;
 
    };
 

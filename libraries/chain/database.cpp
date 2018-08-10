@@ -1957,7 +1957,7 @@ void database::process_comment_cashout()
       {
          fc::microseconds decay_time;
 
-         decay_time = GAMEBANK_RECENT_RSHARES_DECAY_TIME_HF19;//15天
+         decay_time = GAMEBANK_RECENT_RSHARES_DECAY_TIME;//15天
 
          //decay their recent rshares
 		 //随时间衰减recent_claims，时间越长，衰减越多
@@ -3257,7 +3257,7 @@ try {
       modify( get_feed_history(), [&]( feed_history_object& fho )
       {
          fho.price_history.push_back( median_feed );
-         size_t gamebank_feed_history_window = GAMEBANK_FEED_HISTORY_WINDOW_PRE_HF_16;
+         size_t gamebank_feed_history_window = 24 * 7; // 7 days * 24 hours per day
 
          gamebank_feed_history_window = GAMEBANK_FEED_HISTORY_WINDOW;
 
@@ -4464,7 +4464,7 @@ void database::apply_hardfork( uint32_t hardfork )
          {
             modify( get_dynamic_global_properties(), [&]( dynamic_global_property_object& gpo )
             {
-               gpo.delegation_return_period = GAMEBANK_DELEGATION_RETURN_PERIOD_HF20;
+               gpo.delegation_return_period = GAMEBANK_DELEGATION_RETURN_PERIOD_HF01;
             });
 
             const auto& wso = get_witness_schedule_object();
@@ -4567,17 +4567,14 @@ void database::apply_pre_genesis_patches( void )
   
          {
             static_assert(
-               GAMEBANK_MAX_VOTED_WITNESSES_HF0 + GAMEBANK_MAX_MINER_WITNESSES_HF0 + GAMEBANK_MAX_RUNNER_WITNESSES_HF0 == GAMEBANK_MAX_WITNESSES,
-               "HF0 witness counts must add up to GAMEBANK_MAX_WITNESSES" );
-            static_assert(
-               GAMEBANK_MAX_VOTED_WITNESSES_HF17 + GAMEBANK_MAX_MINER_WITNESSES_HF17 + GAMEBANK_MAX_RUNNER_WITNESSES_HF17 == GAMEBANK_MAX_WITNESSES,
+               GAMEBANK_MAX_VOTED_WITNESSES + GAMEBANK_MAX_MINER_WITNESSES + GAMEBANK_MAX_RUNNER_WITNESSES == GAMEBANK_MAX_WITNESSES,
                "HF17 witness counts must add up to GAMEBANK_MAX_WITNESSES" );
 
             modify( get_witness_schedule_object(), [&]( witness_schedule_object& wso )
             {
-               wso.max_voted_witnesses = GAMEBANK_MAX_VOTED_WITNESSES_HF17;
-               wso.max_miner_witnesses = GAMEBANK_MAX_MINER_WITNESSES_HF17;
-               wso.max_runner_witnesses = GAMEBANK_MAX_RUNNER_WITNESSES_HF17;
+               wso.max_voted_witnesses = GAMEBANK_MAX_VOTED_WITNESSES;
+               wso.max_miner_witnesses = GAMEBANK_MAX_MINER_WITNESSES;
+               wso.max_runner_witnesses = GAMEBANK_MAX_RUNNER_WITNESSES;
             });
 
             const auto& gpo = get_dynamic_global_properties();
@@ -4803,7 +4800,7 @@ void database::perform_vesting_share_split( uint32_t magnitude )
             a.vesting_shares.amount *= magnitude;
             a.withdrawn             *= magnitude;
             a.to_withdraw           *= magnitude;
-            a.vesting_withdraw_rate  = asset( a.to_withdraw / GAMEBANK_VESTING_WITHDRAW_INTERVALS_PRE_HF_16, GBS_SYMBOL );
+            a.vesting_withdraw_rate  = asset( a.to_withdraw / 104, GBS_SYMBOL ); /*104 weeks*/
             if( a.vesting_withdraw_rate.amount == 0 )
                a.vesting_withdraw_rate.amount = 1;
 
