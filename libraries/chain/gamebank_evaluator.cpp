@@ -2434,6 +2434,7 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		FC_ASSERT(contract_data == nullptr, "has exist contract");
 
 		contract_lua contract(op.creator);
+		contract.set_database(&_db);
 		FC_ASSERT( contract.deploy(op.code), "deploy error" );
 
 		_db.create<contract_object>([&](contract_object& obj)
@@ -2459,6 +2460,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 		// check abi
 
 		contract_lua contract(op.contract_name);
+		contract.set_database(&_db);
 		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
 
 		variants args;

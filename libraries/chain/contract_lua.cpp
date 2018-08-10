@@ -216,4 +216,9 @@ namespace gamebank { namespace chain {
 		return my->call_method(method, args, result);
 	}
 
+	void contract_lua::set_database(chain::database* db)
+	{
+		my->L->extend.pointer = db;
+	}
+
 }}
