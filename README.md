@@ -1,17 +1,14 @@
 # Gamebank - A Public Chain for Autonomous Game Ecosystem
 
-Welcome to the gamebank source code repository!
+gamebank is a DPOS+BFT blockchain and a smart contract platform
 
-gamebank public chain is developed and maintained by Gamebank Team. 
-
-This code is currently alpha-quality and under rapid development. That said, there is plenty early experimenters can do, including running a private single node test network, transfering tokens, posting articles/comments and so on.
-
-There is no public testnet running currently but it will coming soon.
+gamebank use lua as it's contract language,which provide powerful features and also very friendly to the traditional developer 
 
 ## Supported Operating Systems
 gamebank currently supports the following operating systems:  
-1. Ubuntu 16.04 and 14.04 (Ubuntu 16.04 recommended)
-2. MacOS Darwin 10.11 and higher
+1. Ubuntu 16.04
+2. Windows7 and higher
+3. MacOS Darwin 10.11 and higher
 
 ## Resources
 1. [Gamebank Website](https://gb.cool/)
