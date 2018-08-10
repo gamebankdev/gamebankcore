@@ -7,6 +7,8 @@
 
 #include <gamebank/chain/util/reward.hpp>
 
+#include <gamebank/chain/contract/contract_lua.hpp>
+
 #include <fc/macros.hpp>
 
 #ifndef IS_LOW_MEM
@@ -2431,12 +2433,37 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		auto contract_data = _db.find<contract_object, by_name>(op.creator);
 		FC_ASSERT(contract_data == nullptr, "has exist contract");
 
+		contract_lua contract(op.creator);
+		FC_ASSERT( contract.deploy(op.code), "deploy error" );
+
+		_db.create<contract_object>([&](contract_object& obj)
+		{
+			obj.creator = op.creator;
+			from_string(obj.code, op.code);
+			from_string(obj.abi, op.abi);
+			// version calc
+			obj.created = _db.head_block_time();
+			obj.last_update = obj.created;
+		});
+
+		// call method on_init
+
 	}  FC_CAPTURE_AND_RETHROW((op))
 }
 
 void contract_call_evaluator::do_apply(const contract_call_operation& op)
 {
 	try {
+		const auto& contract_data = _db.get<contract_object, by_name>(op.contract_name);
+
+		// check abi
+
+		contract_lua contract(op.contract_name);
+		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
+
+		variants args;
+		std::string result;
+		FC_ASSERT( contract.call_method(op.method, args, result), "call method error" );
 
 	}  FC_CAPTURE_AND_RETHROW((op))
 }
