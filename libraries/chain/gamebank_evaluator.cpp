@@ -579,7 +579,7 @@ void comment_evaluator::do_apply( const comment_operation& o )
          if( o.parent_author == GAMEBANK_ROOT_POST_PARENT )
              FC_ASSERT( ( now - auth.last_root_post ) > GAMEBANK_MIN_ROOT_COMMENT_INTERVAL, "You may only post once every 5 minutes.", ("now",now)("last_root_post", auth.last_root_post) );
          else
-             FC_ASSERT( (now - auth.last_post) >= GAMEBANK_MIN_REPLY_INTERVAL_HF20, "You may only comment once every 3 seconds.", ("now",now)("auth.last_post",auth.last_post) );
+             FC_ASSERT( (now - auth.last_post) >= GAMEBANK_MIN_REPLY_INTERVAL_HF01, "You may only comment once every 3 seconds.", ("now",now)("auth.last_post",auth.last_post) );
       }
       else
       {
@@ -623,7 +623,7 @@ void comment_evaluator::do_apply( const comment_operation& o )
             from_string( com.parent_permlink, o.parent_permlink );
             from_string( com.category, o.parent_permlink );
             com.root_comment = com.id;
-            com.cashout_time =   _db.head_block_time() + GAMEBANK_CASHOUT_WINDOW_SECONDS_PRE_HF17;
+            com.cashout_time =   _db.head_block_time() + GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD;
 
          }
          else
@@ -955,10 +955,8 @@ void withdraw_vesting_evaluator::do_apply( const withdraw_vesting_operation& o )
       });
    }
    else
-   {
-      int vesting_withdraw_intervals = GAMEBANK_VESTING_WITHDRAW_INTERVALS_PRE_HF_16;
-    
-      vesting_withdraw_intervals = GAMEBANK_VESTING_WITHDRAW_INTERVALS; /// 13 weeks = 1 quarter of a year
+   {    
+      int  vesting_withdraw_intervals = GAMEBANK_VESTING_WITHDRAW_INTERVALS; /// 13 weeks = 1 quarter of a year
 
       _db.modify( account, [&]( account_object& a )
       {
@@ -1225,7 +1223,7 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
       if( rshares > 0 )
       {
-         FC_ASSERT( _db.head_block_time() < comment.cashout_time - GAMEBANK_UPVOTE_LOCKOUT_HF17, "Cannot increase payout within last twelve hours before payout." );
+         FC_ASSERT( _db.head_block_time() < comment.cashout_time - GAMEBANK_UPVOTE_LOCKOUT_TIME, "Cannot increase payout within last twelve hours before payout." );
       }
 
       //used_power /= (50*7); /// a 100% vote means use .28% of voting power which should force users to spread their votes around over 50+ posts day for a week
@@ -1366,7 +1364,7 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
       if( itr->rshares < rshares )
       {
-         FC_ASSERT( _db.head_block_time() < comment.cashout_time - GAMEBANK_UPVOTE_LOCKOUT_HF17, "Cannot increase payout within last twelve hours before payout." );
+         FC_ASSERT( _db.head_block_time() < comment.cashout_time - GAMEBANK_UPVOTE_LOCKOUT_TIME, "Cannot increase payout within last twelve hours before payout." );
          
       }
 
@@ -1689,7 +1687,7 @@ void convert_evaluator::do_apply( const convert_operation& o )
   const auto& fhistory = _db.get_feed_history();
   FC_ASSERT( !fhistory.current_median_history.is_null(), "Cannot convert GBD because there is no price feed." );
 
-  auto gamebank_conversion_delay = GAMEBANK_CONVERSION_DELAY_PRE_HF_16;
+  auto gamebank_conversion_delay = fc::days(7);
   
   gamebank_conversion_delay = GAMEBANK_CONVERSION_DELAY;
 

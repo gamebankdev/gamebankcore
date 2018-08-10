@@ -184,9 +184,9 @@ namespace gamebank { namespace chain {
          chain_properties                                                  median_props;
          version                                                           majority_version;
 
-         uint8_t max_voted_witnesses            = GAMEBANK_MAX_VOTED_WITNESSES_HF0;
-         uint8_t max_miner_witnesses            = GAMEBANK_MAX_MINER_WITNESSES_HF0;
-         uint8_t max_runner_witnesses           = GAMEBANK_MAX_RUNNER_WITNESSES_HF0;
+         uint8_t max_voted_witnesses            = GAMEBANK_MAX_VOTED_WITNESSES;
+         uint8_t max_miner_witnesses            = GAMEBANK_MAX_MINER_WITNESSES;
+         uint8_t max_runner_witnesses           = GAMEBANK_MAX_RUNNER_WITNESSES;
          uint8_t hardfork_required_witnesses    = GAMEBANK_HARDFORK_REQUIRED_WITNESSES;
    };
 

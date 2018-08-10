@@ -17,12 +17,10 @@
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1451606400))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1451606400))
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60) /// 1 hr
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS_PRE_HF12 (GAMEBANK_CASHOUT_WINDOW_SECONDS)
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS_PRE_HF17 (GAMEBANK_CASHOUT_WINDOW_SECONDS)
+#define GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD (GAMEBANK_CASHOUT_WINDOW_SECONDS)
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*3) /// 3 days
 #define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24) /// 1 day
-#define GAMEBANK_UPVOTE_LOCKOUT_HF7              (fc::minutes(1))
-#define GAMEBANK_UPVOTE_LOCKOUT_HF17             (fc::minutes(5))
+#define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::minutes(5))
 
 
 #define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          0
@@ -48,13 +46,11 @@
 
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1458835200))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1458838800))
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS_PRE_HF12 (60*60*24)    /// 1 day
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS_PRE_HF17 (60*60*12)    /// 12 hours
+#define GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD (60*60*12)    /// 12 hours
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60*24*7)  /// 7 days
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*30) /// 30 days
 #define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24*14) /// 2 weeks
-#define GAMEBANK_UPVOTE_LOCKOUT_HF7              (fc::minutes(1))
-#define GAMEBANK_UPVOTE_LOCKOUT_HF17             (fc::hours(12))
+#define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::hours(12))
 
 #define GAMEBANK_MIN_ACCOUNT_CREATION_FEE           1
 
@@ -85,19 +81,14 @@
 
 #define GAMEBANK_MAX_WITNESSES                   21
 
-#define GAMEBANK_MAX_VOTED_WITNESSES_HF0         19
-#define GAMEBANK_MAX_MINER_WITNESSES_HF0         1
-#define GAMEBANK_MAX_RUNNER_WITNESSES_HF0        1
-
-#define GAMEBANK_MAX_VOTED_WITNESSES_HF17        20
-#define GAMEBANK_MAX_MINER_WITNESSES_HF17        0
-#define GAMEBANK_MAX_RUNNER_WITNESSES_HF17       1
+#define GAMEBANK_MAX_VOTED_WITNESSES                20
+#define GAMEBANK_MAX_MINER_WITNESSES                0
+#define GAMEBANK_MAX_RUNNER_WITNESSES               1
 
 #define GAMEBANK_HARDFORK_REQUIRED_WITNESSES     17 // 17 of the 21 dpos witnesses (20 elected and 1 virtual time) required for hardfork. This guarantees 75% participation on all subsequent rounds.
 #define GAMEBANK_MAX_TIME_UNTIL_EXPIRATION       (60*60) // seconds,  aka: 1 hour
 #define GAMEBANK_MAX_MEMO_SIZE                   2048
 #define GAMEBANK_MAX_PROXY_RECURSION_DEPTH       4
-#define GAMEBANK_VESTING_WITHDRAW_INTERVALS_PRE_HF_16 104
 #define GAMEBANK_VESTING_WITHDRAW_INTERVALS      13
 #define GAMEBANK_VESTING_WITHDRAW_INTERVAL_SECONDS (60*60*24*7) /// 1 week per interval
 #define GAMEBANK_MAX_WITHDRAW_ROUTES             10
@@ -111,7 +102,7 @@
 
 #define GAMEBANK_MIN_ROOT_COMMENT_INTERVAL       (fc::seconds(60*5)) // 5 minutes
 #define GAMEBANK_MIN_REPLY_INTERVAL              (fc::seconds(20)) // 20 seconds
-#define GAMEBANK_MIN_REPLY_INTERVAL_HF20         (fc::seconds(3)) // 3 seconds
+#define GAMEBANK_MIN_REPLY_INTERVAL_HF01         (fc::seconds(3)) // 3 seconds
 #define GAMEBANK_POST_AVERAGE_WINDOW             (60*60*24u) // 1 day
 #define GAMEBANK_POST_WEIGHT_CONSTANT            (uint64_t(4*GAMEBANK_100_PERCENT) * (4*GAMEBANK_100_PERCENT))// (4*GAMEBANK_100_PERCENT) -> 2 posts per 1 days, average 1 every 12 hours
 
@@ -132,7 +123,6 @@
 
 #define GAMEBANK_BANDWIDTH_AVERAGE_WINDOW_SECONDS (60*60*24*7) ///< 1 week
 #define GAMEBANK_BANDWIDTH_PRECISION             (uint64_t(1000000)) ///< 1 million
-#define GAMEBANK_MAX_COMMENT_DEPTH_PRE_HF17      6
 #define GAMEBANK_MAX_COMMENT_DEPTH               0xffff // 64k
 #define GAMEBANK_SOFT_MAX_COMMENT_DEPTH          0xff // 255
 
@@ -163,8 +153,7 @@
 
 #define GAMEBANK_POST_REWARD_FUND_NAME           ("post")
 #define GAMEBANK_COMMENT_REWARD_FUND_NAME        ("comment")
-#define GAMEBANK_RECENT_RSHARES_DECAY_TIME_HF17    (fc::days(30))
-#define GAMEBANK_RECENT_RSHARES_DECAY_TIME_HF19    (fc::days(15))
+#define GAMEBANK_RECENT_RSHARES_DECAY_TIME    (fc::days(15))
 #define GAMEBANK_CONTENT_CONSTANT_HF0            (uint128_t(uint64_t(2000000000000ll)))
 // note, if redefining these constants make sure calculate_claims doesn't overflow
 
@@ -230,11 +219,9 @@
 #define GAMEBANK_MIN_BLOCK_SIZE                  115
 #define GAMEBANK_BLOCKS_PER_HOUR                 (60*60/GAMEBANK_BLOCK_INTERVAL)
 #define GAMEBANK_FEED_INTERVAL_BLOCKS            (GAMEBANK_BLOCKS_PER_HOUR)
-#define GAMEBANK_FEED_HISTORY_WINDOW_PRE_HF_16   (24*7) /// 7 days * 24 hours per day
 #define GAMEBANK_FEED_HISTORY_WINDOW             (12*7) // 3.5 days
 #define GAMEBANK_MAX_FEED_AGE_SECONDS            (60*60*24*7) // 7 days
 #define GAMEBANK_MIN_FEEDS                       (GAMEBANK_MAX_WITNESSES/3) /// protects the network from conversions before price has been established
-#define GAMEBANK_CONVERSION_DELAY_PRE_HF_16      (fc::days(7))
 #define GAMEBANK_CONVERSION_DELAY                (fc::hours(GAMEBANK_FEED_HISTORY_WINDOW)) //3.5 day conversion
 
 #define GAMEBANK_MIN_UNDO_HISTORY                10
@@ -259,8 +246,8 @@
 #define GAMEBANK_REDUCED_VOTE_POWER_RATE (10)
 
 #define GAMEBANK_MAX_LIMIT_ORDER_EXPIRATION     (60*60*24*28) // 28 days
-#define GAMEBANK_DELEGATION_RETURN_PERIOD_HF0   (GAMEBANK_CASHOUT_WINDOW_SECONDS)
-#define GAMEBANK_DELEGATION_RETURN_PERIOD_HF20  (GAMEBANK_VOTE_REGENERATION_SECONDS * 2)
+#define GAMEBANK_DELEGATION_RETURN_PERIOD                   (GAMEBANK_CASHOUT_WINDOW_SECONDS)
+#define GAMEBANK_DELEGATION_RETURN_PERIOD_HF01                   (GAMEBANK_VOTE_REGENERATION_SECONDS * 2)
 
 /**
  *  Reserved Account IDs with special meaning
