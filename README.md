@@ -1,4 +1,4 @@
-# gamebankcore - A Public Chain for Autonomous Game Ecosystem
+# Gamebank - A Public Chain for Autonomous Game Ecosystem
 
 Welcome to the gamebank source code repository!
 
