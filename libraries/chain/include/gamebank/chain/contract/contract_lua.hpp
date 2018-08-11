@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gamebank/chain/contract/contract_interface.hpp>
+#include <gamebank/chain/database.hpp>
 
 namespace gamebank { namespace chain {
 
@@ -14,6 +15,8 @@ namespace gamebank { namespace chain {
 		virtual bool deploy(const std::string& data);
 
 		virtual bool call_method(const std::string& method, const variants& args, std::string& result);
+
+		void set_database(chain::database* db);
 
 	private:
 		std::unique_ptr< detail::contract_lua_impl > my;
