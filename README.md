@@ -2,7 +2,7 @@
 
 gamebank is a DPOS+BFT blockchain and a smart contract platform
 
-gamebank use lua as it's contract language,which provide powerful features and also very friendly to the traditional developer 
+gamebank uses lua as it's contract language,which provides powerful features and also very friendly to the traditional developers 
 
 ## Supported Operating Systems
 gamebank currently supports the following operating systems:  
@@ -16,5 +16,5 @@ gamebank currently supports the following operating systems:
 3. [White Paper](http://gb.cool/whitePaper.htm)
 
 ## Getting Started
-Instructions detailing the process of getting the software, building it, running a simple test network that produces blocks, transfer tokens and so on can be found on the at documentation(https://github.com/gamebankdev/gamebankcore/tree/dev/doc) for this GitHub repository.
+Instructions detailing the process of getting the software, building it, running a simple test network that produces blocks, transfer tokens and so on can be found on the documentation(https://github.com/gamebankdev/gamebankcore/tree/dev/doc) for this GitHub repository.
 
