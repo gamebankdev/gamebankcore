@@ -2455,13 +2455,15 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 	try {
 		const auto& contract_data = _db.get<contract_object, by_name>(op.contract_name);
 
-		// check abi
+        fc::variant v = fc::json::from_string(op.args);
+        FC_ASSERT(v.is_array(), "contract args not array");
+        variants args = v.as< vector< fc::variant > >();
+        // check abi from args
 
 		contract_lua contract(op.contract_name);
 		contract.set_database(&_db);
 		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
 
-		variants args;
 		std::string result;
 		FC_ASSERT( contract.call_method(op.method, args, result), "call method error" );
 

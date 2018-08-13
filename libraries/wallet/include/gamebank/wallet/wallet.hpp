@@ -1137,6 +1137,18 @@ class wallet_api
        vector< condenser_api::api_nonfungible_fund_on_sale_object > get_nonfungible_funds_on_sale( uint32_t limit = 1000 );
        vector< condenser_api::api_nonfungible_fund_on_sale_object > get_nonfungible_funds_on_sale_by_expiration( uint32_t limit = 1000 );
 
+       condenser_api::legacy_signed_transaction contract_deploy(
+           string creator,
+           string code,
+           string abi,
+           bool broadcast);
+
+       condenser_api::legacy_signed_transaction contract_call(
+           string caller,
+           string contract_name,
+           string contract_method,
+           string contract_args,
+           bool broadcast);
 };
 
 struct plain_keys {
@@ -1244,6 +1256,8 @@ FC_API( gamebank::wallet::wallet_api,
 	    (get_nonfungible_fund_on_sale_by_fund_id)
 	    (get_nonfungible_funds_on_sale)
 	    (get_nonfungible_funds_on_sale_by_expiration)
+        (contract_deploy)
+        (contract_call)
 
         /// helper api
         (get_prototype_operation)

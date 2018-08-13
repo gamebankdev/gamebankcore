@@ -1069,8 +1069,8 @@ namespace gamebank { namespace protocol {
    */
    struct contract_call_operation : public base_operation
    {
+       account_name_type caller;
 	   account_name_type contract_name;
-	   account_name_type caller;
 	   string            method;
 	   string            args;
 
@@ -1185,5 +1185,5 @@ FC_REFLECT( gamebank::protocol::nonfungible_fund_withdraw_from_sale_operation, (
 FC_REFLECT( gamebank::protocol::nonfungible_fund_buy_operation, (buyer)(fund_id) );
 
 FC_REFLECT(gamebank::protocol::contract_deploy_operation, (creator)(code)(abi));
-FC_REFLECT(gamebank::protocol::contract_call_operation, (contract_name)(caller)(method)(args));
+FC_REFLECT(gamebank::protocol::contract_call_operation, (caller)(contract_name)(method)(args));
 
