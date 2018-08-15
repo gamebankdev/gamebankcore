@@ -76,7 +76,7 @@ namespace gamebank { namespace chain {
 						if (proto->upvalues[b].name != nullptr) {
 							const char* upvalue_name = getstr(proto->upvalues[b].name);
 							if (is_global_var(upvalue_name)) {
-								elog("cant access global var: ${var}", ("var", upvalue_name));
+								elog("cant access global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
 								return false;
 							}
 						}
@@ -87,7 +87,7 @@ namespace gamebank { namespace chain {
 						if (proto->upvalues[b].name != nullptr) {
 							const char* upvalue_name = getstr(proto->upvalues[b].name);
 							if (is_global_var(upvalue_name)) {
-								elog("cant modify global var: ${var}", ("var", upvalue_name));
+								elog("cant modify global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
 								return false;
 							}
 						}
@@ -102,21 +102,21 @@ namespace gamebank { namespace chain {
 									int cidx = INDEXK(c);
 									const char* cname = getstr(tsvalue(&proto->k[cidx]));
 									if (is_global_var(cname)) {
-										elog("cant access global var: ${var}", ("var", cname));
+										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
 									if (strcmp(cname, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME) == 0) {
-										elog("cant access global var: ${var}", ("var", cname));
+										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
 									// check abi
 									if (!is_abi(cname)) {
-										elog("cant access global var: ${var}", ("var", cname));
+										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
 								}
 								else {
-									elog("cant access global var: ${var}", ("var", upvalue_name));
+									elog("cant access global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
 									return false;
 								}
 							}
@@ -132,25 +132,31 @@ namespace gamebank { namespace chain {
 									int bidx = INDEXK(b);
 									const char* bname = getstr(tsvalue(&proto->k[bidx]));
 									if (is_global_var(bname)) {
-										elog("cant modify global var: ${var}", ("var", bname));
+										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
 									if (strcmp(bname, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME) == 0) {
-										elog("cant modify global var: ${var}", ("var", LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME));
+										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
 									// check abi
 									if (!is_abi(bname)) {
-										elog("cant modify global var: ${var}", ("var", bname));
+										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
 								}
 								else {
-									elog("cant modify global var");
+									elog("cant modify global var line:${line}", ("line", line));
 									return false;
 								}
 							}
 						}
+					}
+					break;
+					case OP_CALL:
+					{
+						elog("cant call method when load line:${line}", ("line", line));
+						return false;
 					}
 					break;
 					default:
