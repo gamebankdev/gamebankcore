@@ -2450,22 +2450,62 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 	}  FC_CAPTURE_AND_RETHROW((op))
 }
 
+/*
+ abi struct demo
+    contract function:
+        function test(a,b)
+            return a+b
+        end
+    contract abi:
+        [{"type":"function","name":"test","args":["uint64","uint64"]}]
+*/
+
 void contract_call_evaluator::do_apply(const contract_call_operation& op)
 {
+    auto check_abi = [&](const fc::variant &arg_tp, const fc::string &abi_tp) -> bool{
+        if (arg_tp.is_uint64() && abi_tp == "uint64")
+            return true;
+        if (arg_tp.is_int64() && abi_tp == "int64")
+            return true;
+        if (arg_tp.is_string() && abi_tp == "string")
+            return true;
+        return false;
+    };
 	try {
 		const auto& contract_data = _db.get<contract_object, by_name>(op.contract_name);
 
         fc::variant v = fc::json::from_string(op.args);
         FC_ASSERT(v.is_array(), "contract args not array");
-        variants args = v.as< vector< fc::variant > >();
+        variants op_args = v.as< vector< fc::variant > >();
         // check abi from args
+        fc::variant abiv = fc::json::from_string(to_string(contract_data.abi));
+        FC_ASSERT(abiv.is_array(), "contract abi not array");
+        variants abis = abiv.as< vector< fc::variant > >();
+        bool check_name = false;
+        for (size_t i = 0; i < abis.size(); ++i)
+        {
+            fc::variant_object abi_obj = abis[i].get_object();
+            if (abi_obj["name"].as_string() == op.method)
+            {
+                check_name = true;
+                FC_ASSERT(abi_obj["args"].is_array(), "contract abi args not array");
+                variants abi_args = abi_obj["args"].as< std::vector< fc::variant > >();
+                FC_ASSERT(abi_args.size() == op_args.size(), "contract args num error");
+                for (size_t i = 0; i < op_args.size(); ++i)
+                {
+                    FC_ASSERT(!op_args[i].is_array(), "contract abi args num %{n} array", ("n", i));
+                    FC_ASSERT(check_abi(op_args[i], abi_args[i].as_string()), "contract abi args err");
+                }
+            }
+        }
+        FC_ASSERT(check_name, "contract abi check op name error");
 
 		contract_lua contract(op.contract_name);
 		contract.set_database(&_db);
 		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
 
 		std::string result;
-		FC_ASSERT( contract.call_method(op.method, args, result), "call method error" );
+		FC_ASSERT( contract.call_method(op.method, op_args, result), "call method error" );
 
 	}  FC_CAPTURE_AND_RETHROW((op))
 }
