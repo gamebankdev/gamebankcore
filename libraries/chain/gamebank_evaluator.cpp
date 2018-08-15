@@ -2427,13 +2427,29 @@ void nonfungible_fund_buy_evaluator::do_apply( const nonfungible_fund_buy_operat
 void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 {
 	try {
-		const auto& creator = _db.get_account(op.creator);
+		//const auto& creator = _db.get_account(op.creator);
 		auto contract_data = _db.find<contract_object, by_name>(op.creator);
 		FC_ASSERT(contract_data == nullptr, "has exist contract");
 
 		contract_lua contract(op.creator);
 		contract.set_database(&_db);
 		FC_ASSERT( contract.deploy(op.code), "deploy error" );
+
+        // check abi
+        fc::variant abiv = fc::json::from_string(op.abi);
+        FC_ASSERT(abiv.is_array(), "op abi not array");
+        variants abis = abiv.as< vector< fc::variant > >();
+        for (size_t i = 0; i < abis.size(); ++i)
+        {
+            fc::variant_object abi_obj = abis[i].get_object();
+            FC_ASSERT(abi_obj.contains("type"), "op abi no type");
+            FC_ASSERT(abi_obj.contains("name"), "op abi no name");
+            FC_ASSERT(abi_obj.contains("args"), "op abi no args");
+            FC_ASSERT(abi_obj["args"].is_array(), "op abi args not array");
+            variants abi_args = abi_obj["args"].as< std::vector< fc::variant > >();
+            for (size_t j = 0; j < abi_args.size(); ++j)
+                FC_ASSERT(!abi_args[j].is_array(), "op abi args num %{n} array", ("n", j));
+        }
 
 		_db.create<contract_object>([&](contract_object& obj)
 		{
@@ -2479,7 +2495,6 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
         variants op_args = v.as< vector< fc::variant > >();
         // check abi from args
         fc::variant abiv = fc::json::from_string(to_string(contract_data.abi));
-        FC_ASSERT(abiv.is_array(), "contract abi not array");
         variants abis = abiv.as< vector< fc::variant > >();
 		std::set<std::string> abi_method_names;
         bool check_name = false;
@@ -2490,13 +2505,12 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
             if (abi_obj["name"].as_string() == op.method)
             {
                 check_name = true;
-                FC_ASSERT(abi_obj["args"].is_array(), "contract abi args not array");
                 variants abi_args = abi_obj["args"].as< std::vector< fc::variant > >();
                 FC_ASSERT(abi_args.size() == op_args.size(), "contract args num error");
-                for (size_t i = 0; i < op_args.size(); ++i)
+                for (size_t j = 0; j < op_args.size(); ++j)
                 {
-                    FC_ASSERT(!op_args[i].is_array(), "contract abi args num %{n} array", ("n", i));
-                    FC_ASSERT(check_abi(op_args[i], abi_args[i].as_string()), "contract abi args err");
+                    FC_ASSERT(!op_args[j].is_array(), "op abi args num %{n} array", ("n", j));
+                    FC_ASSERT(check_abi(op_args[j], abi_args[j].as_string()), "contract abi args err");
                 }
             }
         }
