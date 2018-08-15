@@ -14,6 +14,7 @@ extern "C"
 #include "gamebank/chain/contract/lua/lstate.h"
 #include "gamebank/chain/contract/lua/lopcodes.h"
 #include "gamebank/chain/contract/lua/lua_cjson.h"
+#include "gamebank/chain/contract/lua/ldebug.h"
 }
 
 namespace gamebank { namespace chain {
@@ -31,6 +32,137 @@ namespace gamebank { namespace chain {
 			~contract_lua_impl()
 			{
 				lua_close(L);
+			}
+
+			bool is_global_var(const char* upvalue_name)
+			{
+				if (strcmp(upvalue_name, "_G") == 0
+					|| strcmp(upvalue_name, "_ENV") == 0)
+				{
+					return true;
+				}
+				return false;
+			}
+
+			bool is_abi(const char* name)
+			{
+				return abi_method_names.find(name) != abi_method_names.end();
+			}
+
+			void set_abi(const std::set<std::string>& method_names)
+			{
+				abi_method_names = method_names;
+			}
+
+			bool compile_check(Proto* proto)
+			{
+				// opcodes
+				for (int pc = 0; pc < proto->sizecode; ++pc)
+				{
+					Instruction i = proto->code[pc];
+					OpCode o = GET_OPCODE(i);
+					int a = GETARG_A(i);
+					int b = GETARG_B(i);
+					int c = GETARG_C(i);
+					int ax = GETARG_Ax(i);
+					int bx = GETARG_Bx(i);
+					int sbx = GETARG_sBx(i);
+					int line = getfuncline(proto, pc);
+
+					switch (o)
+					{
+					case OP_GETUPVAL:
+					{
+						if (proto->upvalues[b].name != nullptr) {
+							const char* upvalue_name = getstr(proto->upvalues[b].name);
+							if (is_global_var(upvalue_name)) {
+								elog("cant access global var: ${var}", ("var", upvalue_name));
+								return false;
+							}
+						}
+					}
+					break;
+					case OP_SETUPVAL:
+					{
+						if (proto->upvalues[b].name != nullptr) {
+							const char* upvalue_name = getstr(proto->upvalues[b].name);
+							if (is_global_var(upvalue_name)) {
+								elog("cant modify global var: ${var}", ("var", upvalue_name));
+								return false;
+							}
+						}
+						break;
+					}
+					case OP_GETTABUP:
+					{
+						if (proto->upvalues[b].name != nullptr) {
+							const char* upvalue_name = getstr(proto->upvalues[b].name);
+							if (is_global_var(upvalue_name)) {
+								if (ISK(c)) {
+									int cidx = INDEXK(c);
+									const char* cname = getstr(tsvalue(&proto->k[cidx]));
+									if (is_global_var(cname)) {
+										elog("cant access global var: ${var}", ("var", cname));
+										return false;
+									}
+									if (strcmp(cname, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME) == 0) {
+										elog("cant access global var: ${var}", ("var", cname));
+										return false;
+									}
+									// check abi
+									if (!is_abi(cname)) {
+										elog("cant access global var: ${var}", ("var", cname));
+										return false;
+									}
+								}
+								else {
+									elog("cant access global var: ${var}", ("var", upvalue_name));
+									return false;
+								}
+							}
+						}
+						break;
+					}
+					case OP_SETTABUP:
+					{
+						if (proto->upvalues[a].name != nullptr) {
+							const char* upvalue_name = getstr(proto->upvalues[a].name);
+							if (is_global_var(upvalue_name)) {
+								if (ISK(b)) {
+									int bidx = INDEXK(b);
+									const char* bname = getstr(tsvalue(&proto->k[bidx]));
+									if (is_global_var(bname)) {
+										elog("cant modify global var: ${var}", ("var", bname));
+										return false;
+									}
+									if (strcmp(bname, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME) == 0) {
+										elog("cant modify global var: ${var}", ("var", LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME));
+										return false;
+									}
+									// check abi
+									if (!is_abi(bname)) {
+										elog("cant modify global var: ${var}", ("var", bname));
+										return false;
+									}
+								}
+								else {
+									elog("cant modify global var");
+									return false;
+								}
+							}
+						}
+					}
+					break;
+					default:
+						break;
+					}
+				}
+				for (int i = 0; i < proto->sizep; ++i)
+				{
+					if (!compile_check(proto->p[i]))
+						return false;
+				}
+				return true;
 			}
 
 			bool deploy(const std::string& data)
@@ -55,13 +187,13 @@ namespace gamebank { namespace chain {
 				int type = lua_type(L, -1);
 				//printf("deploy 2 stack_pos=%d type=%d\n", stack_pos, type);
 				LClosure* lc = clLvalue(L->top - 1);
-				if (lc != nullptr)
+				if (lc == nullptr || lc->p == nullptr)
 				{
-					if (lc->p != nullptr)
-					{
-						// check proto
-						//print_proto(lc->p);
-					}
+					return false;
+				}
+				if (!compile_check(lc->p))
+				{
+					return false;
 				}
 
 				ret = lua_pcall(L, 0, LUA_MULTRET, 0);
@@ -77,24 +209,6 @@ namespace gamebank { namespace chain {
 					}
 					//FC_ASSERT(ret == 0, "contract compile error");
 				}
-				stack_pos = lua_gettop(L);
-				//printf("deploy 3 stack_pos=%d\n", stack_pos);
-				int check_top = lua_gettop(L);
-				lua_getglobal(L, "_modified_data");
-				assert(lua_isnil(L, -1));
-				lua_pop(L, 1);
-				assert(check_top == lua_gettop(L));
-
-				lua_createtable(L, 0, 0);
-				lua_setglobal(L, "_modified_data");
-				int check_top2 = lua_gettop(L);
-				assert(check_top == check_top2);
-
-				lua_getglobal(L, "_modified_data");
-				assert(lua_istable(L, -1));
-				lua_pop(L, 1);
-				assert(check_top == lua_gettop(L));
-
 				return true;
 			}
 
@@ -150,10 +264,9 @@ namespace gamebank { namespace chain {
 
 			void save_modified_data()
 			{
-				//printf("save_modified_data\n" );
 				chain::database* db = (chain::database*)(L->extend.pointer);
-				lua_getglobal(L, "_modified_data");
-				FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
+				lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
+				FC_ASSERT(lua_istable(L, -1), "_contract_modified_data must be a table");
 				lua_pushnil(L);
 				while (lua_next(L, -2) != 0) {
 					/* table, key, value */
@@ -194,6 +307,7 @@ namespace gamebank { namespace chain {
 		public:
 			lua_State * L = nullptr;
 			contract_lua& contract;
+			std::set<std::string> abi_method_names;
 		};
 	}
 
@@ -219,6 +333,11 @@ namespace gamebank { namespace chain {
 	void contract_lua::set_database(chain::database* db)
 	{
 		my->L->extend.pointer = db;
+	}
+
+	void contract_lua::set_abi(const std::set<std::string>& method_names)
+	{
+		return my->set_abi(method_names);
 	}
 
 }}

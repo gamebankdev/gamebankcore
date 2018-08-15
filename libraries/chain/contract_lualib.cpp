@@ -40,11 +40,11 @@ static int contract_get_data(lua_State *L) {
 	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
 
 	int check_top = lua_gettop(L);
-	lua_getglobal(L, "_modified_data");
-	FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
+	lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
+	FC_ASSERT(lua_istable(L, -1), "_contract_modified_data must be a table");
 	lua_pushstring(L, user_name);
 	lua_pushvalue(L, -3); // push datatable to top
-	lua_rawset(L, -3); // _modified_data[contract_name] = datatable
+	lua_rawset(L, -3); // _contract_modified_data[contract_name] = datatable
 	lua_pop(L, 1);
 	int check_top2 = lua_gettop(L);
 	FC_ASSERT(check_top == check_top2, "lua stack error");
@@ -66,6 +66,7 @@ static int contract_get_user_data(lua_State *L) {
 	{
 		return 0;
 	}
+	// check account exists
 	// todo: check is load in lua?
 	chain::database* db = (chain::database*)(L->extend.pointer);
 	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
@@ -73,11 +74,11 @@ static int contract_get_user_data(lua_State *L) {
 	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
 
 	int check_top = lua_gettop(L);
-	lua_getglobal(L, "_modified_data");
-	FC_ASSERT(lua_istable(L, -1), "_modified_data must be a table");
+	lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
+	FC_ASSERT(lua_istable(L, -1), "_contract_modified_data must be a table");
 	lua_pushstring(L, user_name);
 	lua_pushvalue(L, -3); // push datatable to top
-	lua_rawset(L, -3); // _modified_data[contract_name] = datatable
+	lua_rawset(L, -3); // _contract_modified_data[contract_name] = datatable
 	lua_pop(L, 1);
 	int check_top2 = lua_gettop(L);
 	FC_ASSERT(check_top == check_top2, "lua stack error");
