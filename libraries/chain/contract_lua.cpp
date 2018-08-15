@@ -54,7 +54,7 @@ namespace gamebank { namespace chain {
 				abi_method_names = method_names;
 			}
 
-			bool compile_check(Proto* proto)
+			bool compile_check(Proto* proto, Proto* parent_proto)
 			{
 				// opcodes
 				for (int pc = 0; pc < proto->sizecode; ++pc)
@@ -155,8 +155,10 @@ namespace gamebank { namespace chain {
 					break;
 					case OP_CALL:
 					{
-						elog("cant call method when load line:${line}", ("line", line));
-						return false;
+						if (parent_proto == nullptr) {
+							elog("cant call method when load line:${line}", ("line", line));
+							return false;
+						}
 					}
 					break;
 					default:
@@ -165,7 +167,7 @@ namespace gamebank { namespace chain {
 				}
 				for (int i = 0; i < proto->sizep; ++i)
 				{
-					if (!compile_check(proto->p[i]))
+					if (!compile_check(proto->p[i], proto))
 						return false;
 				}
 				return true;
@@ -197,7 +199,7 @@ namespace gamebank { namespace chain {
 				{
 					return false;
 				}
-				if (!compile_check(lc->p))
+				if (!compile_check(lc->p, nullptr))
 				{
 					return false;
 				}
