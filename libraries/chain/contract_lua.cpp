@@ -65,6 +65,12 @@ namespace gamebank { namespace chain {
 				abi_method_names = method_names;
 			}
 
+			void set_extend(const string& contract_name, const string& caller_name)
+			{
+				strcpy(L->extend.contract_name, contract_name.c_str());
+				strcpy(L->extend.caller_name, caller_name.c_str());
+			}
+
 			bool compile_check(Proto* proto, Proto* parent_proto)
 			{
 				// opcodes
@@ -358,6 +364,11 @@ namespace gamebank { namespace chain {
 	void contract_lua::set_abi(const std::set<std::string>& method_names)
 	{
 		return my->set_abi(method_names);
+	}
+
+	void contract_lua::set_extend(const account_name_type& contract_name, const account_name_type& caller_name)
+	{
+		return my->set_extend(contract_name, caller_name);
 	}
 
 }}

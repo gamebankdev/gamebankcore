@@ -2452,6 +2452,7 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		contract_lua contract(op.creator);
 		contract.set_database(&_db);
 		contract.set_abi(abi_method_names);
+		contract.set_extend(op.creator, op.creator);
 		FC_ASSERT(contract.deploy(op.code), "deploy error");
 
 		_db.create<contract_object>([&](contract_object& obj)
@@ -2522,6 +2523,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 		contract_lua contract(op.contract_name);
 		contract.set_database(&_db);
 		contract.set_abi(abi_method_names);
+		contract.set_extend(op.contract_name, op.caller);
 		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
 
 		std::string result;

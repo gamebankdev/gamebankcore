@@ -18,6 +18,7 @@ namespace gamebank { namespace chain {
 
 		void set_database(chain::database* db);
 		void set_abi(const std::set<std::string>& method_names);
+		void set_extend(const account_name_type& contract_name, const account_name_type& caller_name );
 
 	private:
 		std::unique_ptr< detail::contract_lua_impl > my;
