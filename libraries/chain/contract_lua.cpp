@@ -298,13 +298,14 @@ namespace gamebank { namespace chain {
 					int keytype = lua_type(L, -2);
 					int valuetype = lua_type(L, -1);
 					FC_ASSERT(keytype == LUA_TSTRING, "key must be string");
-					FC_ASSERT(valuetype == LUA_TTABLE, "key must be table");
+					FC_ASSERT(valuetype == LUA_TTABLE, "value must be table");
 
 					const char* key = lua_tostring(L, -2);
 					std::string user_name(key);
 					int datalen = 0;
 					char* json = json_encode_tostring(L, &datalen);
 					FC_ASSERT((json != nullptr) && (datalen > 0), "get user data from lua error");
+					ilog("save contract_data ${contract_name}.${user_name}:${data}", ("contract_name", L->extend.contract_name)("user_name", user_name)("data", json));
 
 					auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
 					if (contract_data == nullptr) {

@@ -36,6 +36,7 @@ static int contract_get_data_by_username(lua_State *L, const char* user_name) {
 	}
 	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
 	std::string data = contract_data ? to_string(contract_data->data) : "{}";
+	ilog("read contract_data ${contract_name}.${user_name}:${data}", ("contract_name", L->extend.contract_name)("user_name", user_name)("data", data));
 	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
 
 	int check_top = lua_gettop(L);
