@@ -17,6 +17,7 @@ namespace gamebank { namespace chain {
 		virtual bool call_method(const std::string& method, const variants& args, std::string& result);
 
 		void set_database(chain::database* db);
+		void set_abi(const std::set<std::string>& method_names);
 
 	private:
 		std::unique_ptr< detail::contract_lua_impl > my;

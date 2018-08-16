@@ -2496,10 +2496,12 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
         // check abi from args
         fc::variant abiv = fc::json::from_string(to_string(contract_data.abi));
         variants abis = abiv.as< vector< fc::variant > >();
+		std::set<std::string> abi_method_names;
         bool check_name = false;
         for (size_t i = 0; i < abis.size(); ++i)
         {
             fc::variant_object abi_obj = abis[i].get_object();
+			abi_method_names.insert(abi_obj["name"].as_string());
             if (abi_obj["name"].as_string() == op.method)
             {
                 check_name = true;
@@ -2516,6 +2518,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 
 		contract_lua contract(op.contract_name);
 		contract.set_database(&_db);
+		contract.set_abi(abi_method_names);
 		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
 
 		std::string result;
