@@ -68,7 +68,9 @@ namespace gamebank { namespace chain {
 			void set_extend(const string& contract_name, const string& caller_name)
 			{
 				strcpy(L->extend.contract_name, contract_name.c_str());
+				L->extend.contract_name[contract_name.length()] = '\0';
 				strcpy(L->extend.caller_name, caller_name.c_str());
+				L->extend.caller_name[caller_name.length()] = '\0';
 			}
 
 			bool compile_check(Proto* proto, Proto* parent_proto)
@@ -313,7 +315,8 @@ namespace gamebank { namespace chain {
 						{
 							obj.contract_name = string(L->extend.contract_name);
 							obj.user_name = user_name;
-							from_string(obj.data, json);
+							//from_string(obj.data, json);
+							obj.data.assign(json, datalen);
 							obj.created = db->head_block_time();
 							obj.last_update = obj.created;
 						});
@@ -321,7 +324,7 @@ namespace gamebank { namespace chain {
 					else {
 						db->modify(*contract_data, [&](contract_user_object& obj)
 						{
-							from_string(obj.data, json);
+							obj.data.assign(json, datalen);
 							obj.last_update = db->head_block_time();
 						});
 					}
