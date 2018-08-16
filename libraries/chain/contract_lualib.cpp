@@ -86,9 +86,9 @@ static int contract_transfer(lua_State *L) {
 		luaL_error(L, "expected 3 argument" );
 		return 0;
 	}
-	luaL_argcheck(L, !lua_isstring(L, 1), 1, "string expected");
-	luaL_argcheck(L, !lua_isstring(L, 2), 2, "string expected");
-	luaL_argcheck(L, !lua_isinteger(L, 3), 3, "integer expected");
+	luaL_argcheck(L, lua_isstring(L, 1), 1, "string expected");
+	luaL_argcheck(L, lua_isstring(L, 2), 2, "string expected");
+	luaL_argcheck(L, lua_isinteger(L, 3), 3, "integer expected");
 	const char* from_account = lua_tostring(L, 1);
 	const char* to_account = lua_tostring(L, 2);
 	lua_Integer num = lua_tointeger(L, 3);
