@@ -137,6 +137,18 @@ LUALIB_API void luaL_openlibs_contract(lua_State *L) {
 		luaL_requiref(L, lib->name, lib->func, 1);
 		lua_pop(L, 1);  /* remove lib */
 	}
+
+	int check_top = lua_gettop(L);
+	lua_pushglobaltable(L);
+	//lua_getglobal(L, "_G");
+	assert(lua_istable(L, -1));
+	lua_createtable(L, 0, 0);
+	lua_setfield(L, -2, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME); // _G["_contract_modified_data"] = {}
+	lua_pop(L, 1);
+	assert(check_top == lua_gettop(L));
+
+	//lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
+	//lua_pop(L, 1);
 }
 
 }}
