@@ -2431,17 +2431,15 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		auto contract_data = _db.find<contract_object, by_name>(op.creator);
 		FC_ASSERT(contract_data == nullptr, "has exist contract");
 
-		contract_lua contract(op.creator);
-		contract.set_database(&_db);
-		FC_ASSERT( contract.deploy(op.code), "deploy error" );
-
         // check abi
         fc::variant abiv = fc::json::from_string(op.abi);
         FC_ASSERT(abiv.is_array(), "op abi not array");
         variants abis = abiv.as< vector< fc::variant > >();
+		std::set<std::string> abi_method_names;
         for (size_t i = 0; i < abis.size(); ++i)
         {
             fc::variant_object abi_obj = abis[i].get_object();
+			abi_method_names.insert(abi_obj["name"].as_string());
             FC_ASSERT(abi_obj.contains("type"), "op abi no type");
             FC_ASSERT(abi_obj.contains("name"), "op abi no name");
             FC_ASSERT(abi_obj.contains("args"), "op abi no args");
@@ -2450,6 +2448,11 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
             for (size_t j = 0; j < abi_args.size(); ++j)
                 FC_ASSERT(!abi_args[j].is_array(), "op abi args num %{n} array", ("n", j));
         }
+
+		contract_lua contract(op.creator);
+		contract.set_database(&_db);
+		contract.set_abi(abi_method_names);
+		FC_ASSERT(contract.deploy(op.code), "deploy error");
 
 		_db.create<contract_object>([&](contract_object& obj)
 		{
