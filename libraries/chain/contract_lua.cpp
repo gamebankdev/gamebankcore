@@ -29,11 +29,38 @@ namespace gamebank { namespace chain {
 				luaL_openlibs(L);
 				luaL_openlibs_contract(L);
 
+				// contract
 				sys_functions.insert("contract");
-				sys_functions.insert("print");
-				sys_functions.insert("tonumber");
+
+				// baselib
+				sys_functions.insert("assert");
+				sys_functions.insert("error");
+				sys_functions.insert("getmetatable");
 				sys_functions.insert("ipairs");
+				sys_functions.insert("next");
 				sys_functions.insert("pairs");
+				sys_functions.insert("print");
+				sys_functions.insert("rawequal");
+				sys_functions.insert("rawlen");
+				sys_functions.insert("rawget");
+				sys_functions.insert("rawset");
+				sys_functions.insert("select");
+				sys_functions.insert("setmetatable");
+				sys_functions.insert("tonumber");
+				sys_functions.insert("tostring");
+				sys_functions.insert("type");
+
+				// tablib
+				sys_functions.insert("table");
+
+				// strlib
+				sys_functions.insert("string");
+
+				// math
+				sys_functions.insert("math");
+
+				// utf8
+				sys_functions.insert("utf8");
 			}
 			~contract_lua_impl()
 			{
@@ -256,7 +283,16 @@ namespace gamebank { namespace chain {
 				for (variant arg : args)
 				{
 					// push arg
-					lua_pushstring(L, arg.as_string().c_str());
+					if (arg.is_integer())
+						lua_pushinteger(L, arg.as_int64());
+					else if (arg.is_double())
+						lua_pushnumber(L, arg.as_double());
+					else if (arg.is_string())
+						lua_pushstring(L, arg.as_string().c_str());
+					else if (arg.is_null())
+						lua_pushnil(L);
+					else
+						lua_pushstring(L, arg.as_string().c_str());
 				}
 				if (lua_pcall(L, lua_gettop(L) - (oldStackPos + 1), LUA_MULTRET, 0) != 0)
 				{
