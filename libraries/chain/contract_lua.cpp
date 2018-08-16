@@ -28,6 +28,12 @@ namespace gamebank { namespace chain {
 				L = luaL_newstate();
 				luaL_openlibs(L);
 				luaL_openlibs_contract(L);
+
+				sys_functions.insert("contract");
+				sys_functions.insert("print");
+				sys_functions.insert("tonumber");
+				sys_functions.insert("ipairs");
+				sys_functions.insert("pairs");
 			}
 			~contract_lua_impl()
 			{
@@ -47,6 +53,11 @@ namespace gamebank { namespace chain {
 			bool is_abi(const char* name)
 			{
 				return abi_method_names.find(name) != abi_method_names.end();
+			}
+
+			bool is_sys_function(const char* name)
+			{
+				return sys_functions.find(name) != sys_functions.end();
 			}
 
 			void set_abi(const std::set<std::string>& method_names)
@@ -110,7 +121,7 @@ namespace gamebank { namespace chain {
 										return false;
 									}
 									// check abi
-									if (!is_abi(cname)) {
+									if (!is_sys_function(bname) && !is_abi(bname)) {
 										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
@@ -140,7 +151,7 @@ namespace gamebank { namespace chain {
 										return false;
 									}
 									// check abi
-									if (!is_abi(bname)) {
+									if ( !is_abi(bname)) {
 										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
@@ -316,6 +327,7 @@ namespace gamebank { namespace chain {
 			lua_State * L = nullptr;
 			contract_lua& contract;
 			std::set<std::string> abi_method_names;
+			std::set<std::string> sys_functions;
 		};
 	}
 
