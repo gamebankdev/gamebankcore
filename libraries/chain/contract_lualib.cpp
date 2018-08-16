@@ -27,14 +27,13 @@ static int contract_get_caller(lua_State *L) {
 	return 1;
 }
 
-static int contract_get_data(lua_State *L) {
-	if (lua_gettop(L) != 0)
-	{
-		return 0;
-	}
-	const char* user_name = L->extend.contract_name;
+static int contract_get_data_by_username(lua_State *L, const char* user_name) {
 	// todo: check is load in lua?
 	chain::database* db = (chain::database*)(L->extend.pointer);
+	if (db->find_account(user_name) == nullptr) {
+		luaL_error(L, "expected a real account name");
+		return 0;
+	}
 	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
 	std::string data = contract_data ? to_string(contract_data->data) : "{}";
 	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
@@ -48,17 +47,28 @@ static int contract_get_data(lua_State *L) {
 	lua_pop(L, 1);
 	int check_top2 = lua_gettop(L);
 	FC_ASSERT(check_top == check_top2, "lua stack error");
-
 	return ret;
+}
+
+static int contract_get_data(lua_State *L) {
+	if (lua_gettop(L) != 0)
+	{
+		luaL_error(L, "expected zero arg");
+		return 0;
+	}
+	const char* user_name = L->extend.contract_name;
+	return contract_get_data_by_username(L, user_name);
 }
 
 static int contract_get_user_data(lua_State *L) {
 	if (lua_gettop(L) != 1)
 	{
+		luaL_error(L, "expected 1 arg");
 		return 0;
 	}
 	if (!lua_isstring(L, 1))
 	{
+		luaL_error(L, "expected string arg");
 		return 0;
 	}
 	const char* user_name = lua_tostring(L, 1);
@@ -66,31 +76,33 @@ static int contract_get_user_data(lua_State *L) {
 	{
 		return 0;
 	}
-	// check account exists
-	// todo: check is load in lua?
-	chain::database* db = (chain::database*)(L->extend.pointer);
-	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
-	std::string data = contract_data ? to_string(contract_data->data) : "{}";
-	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
-
-	int check_top = lua_gettop(L);
-	lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
-	FC_ASSERT(lua_istable(L, -1), "_contract_modified_data must be a table");
-	lua_pushstring(L, user_name);
-	lua_pushvalue(L, -3); // push datatable to top
-	lua_rawset(L, -3); // _contract_modified_data[contract_name] = datatable
-	lua_pop(L, 1);
-	int check_top2 = lua_gettop(L);
-	FC_ASSERT(check_top == check_top2, "lua stack error");
-
-	return ret;
+	return contract_get_data_by_username(L, user_name);
 }
 
 static int contract_transfer(lua_State *L) {
-	if (lua_gettop(L) != 3)
+	int n = lua_gettop(L);  /* number of arguments */
+	if (n != 3)
 	{
+		luaL_error(L, "expected 3 argument" );
 		return 0;
 	}
+	luaL_argcheck(L, !lua_isstring(L, 1), 1, "string expected");
+	luaL_argcheck(L, !lua_isstring(L, 2), 2, "string expected");
+	luaL_argcheck(L, !lua_isinteger(L, 3), 3, "integer expected");
+	const char* from_account = lua_tostring(L, 1);
+	const char* to_account = lua_tostring(L, 2);
+	lua_Integer num = lua_tointeger(L, 3);
+	if (strcmp(L->extend.caller_name, from_account) != 0) {
+		luaL_error(L, "only the contract caller can call transfer");
+		return 0;
+	}
+	account_name_type from = from_account;
+	account_name_type to = to_account;
+	asset amount(num, GBC_SYMBOL);
+	chain::database* db = (chain::database*)(L->extend.pointer);
+	FC_ASSERT(db->get_balance(from, amount.symbol) >= amount, "Account does not have sufficient funds for transfer.");
+	db->adjust_balance(from, -amount);
+	db->adjust_balance(to, amount);
 	return 0;
 }
 
