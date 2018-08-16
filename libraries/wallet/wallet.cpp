@@ -2632,6 +2632,37 @@ condenser_api::legacy_signed_transaction wallet_api::contract_deploy(string crea
     return my->sign_transaction(tx, broadcast);
 }
 
+condenser_api::legacy_signed_transaction wallet_api::contract_deploy_file(string creator, string code_file, string abi_file, bool broadcast)
+{
+    FC_ASSERT(!is_locked());
+
+    std::fstream fcode, fabi;
+    std::stringstream codebuff,abibuff;
+
+    fcode.open(code_file, (std::ios::in | std::ios::binary));
+    FC_ASSERT(fcode, "open code file fail");
+    codebuff << fcode.rdbuf();
+    std::string code(codebuff.str());
+    fcode.close();
+
+    fabi.open(abi_file, (std::ios::in | std::ios::binary));
+    FC_ASSERT(fabi, "open abi file fail");
+    abibuff << fabi.rdbuf();
+    std::string abi(abibuff.str());
+    fabi.close();
+
+    contract_deploy_operation op;
+    op.creator = creator;
+    op.code = code;
+    op.abi = abi;
+
+    signed_transaction tx;
+    tx.operations.push_back(op);
+    tx.validate();
+
+    return my->sign_transaction(tx, broadcast);
+}
+
 condenser_api::legacy_signed_transaction wallet_api::contract_call(string caller, string contract_name, string contract_method, string contract_args, bool broadcast)
 {
     FC_ASSERT(!is_locked());

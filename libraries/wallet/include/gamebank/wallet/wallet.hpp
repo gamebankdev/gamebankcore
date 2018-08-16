@@ -1143,6 +1143,12 @@ class wallet_api
            string abi,
            bool broadcast);
 
+       condenser_api::legacy_signed_transaction contract_deploy_file(
+           string creator,
+           string code_file,
+           string abi_file,
+           bool broadcast);
+
        condenser_api::legacy_signed_transaction contract_call(
            string caller,
            string contract_name,
@@ -1257,6 +1263,7 @@ FC_API( gamebank::wallet::wallet_api,
 	    (get_nonfungible_funds_on_sale)
 	    (get_nonfungible_funds_on_sale_by_expiration)
         (contract_deploy)
+        (contract_deploy_file)
         (contract_call)
 
         /// helper api
