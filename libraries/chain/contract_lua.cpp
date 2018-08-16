@@ -121,7 +121,7 @@ namespace gamebank { namespace chain {
 										return false;
 									}
 									// check abi
-									if (!is_sys_function(bname) && !is_abi(bname)) {
+									if (!is_sys_function(cname) && !is_abi(cname)) {
 										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
