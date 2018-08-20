@@ -128,6 +128,8 @@ struct discussion_query
 struct discussion_query_result
 {
    vector< discussion > discussions;
+   //The total number of posts for a particular tag(only post not comment)
+   uint32_t total_post_counts;
 };
 
 typedef get_discussion_args      get_content_replies_args;
@@ -269,7 +271,7 @@ FC_REFLECT( gamebank::plugins::tags::discussion_query,
             (tag)(limit)(filter_tags)(select_authors)(select_tags)(truncate_body)(start_author)(start_permlink)(parent_author)(parent_permlink) )
 
 FC_REFLECT( gamebank::plugins::tags::discussion_query_result,
-            (discussions) )
+            (discussions)(total_post_counts) )
 
 FC_REFLECT( gamebank::plugins::tags::get_replies_by_last_update_args,
             (start_parent_author)(start_permlink)(limit) )

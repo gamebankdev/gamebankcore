@@ -230,11 +230,14 @@ class tag_stats_object : public object< tag_stats_object_type, tag_stats_object 
 
       id_type           id;
 
-      tag_name_type     tag;
-      asset             total_payout = asset( 0, GBD_SYMBOL );
-      int32_t           net_votes = 0;
-      uint32_t          top_posts = 0;
-      uint32_t          comments  = 0;
+      tag_name_type     tag;		//a particular tag
+	  //modify by comment_reward_operation,记录标签为tag的所有帖子/评论的总奖励
+      //asset             total_payout = asset( 0, GBD_SYMBOL );	
+      asset             total_payout = asset( 0, GBC_SYMBOL );	
+	  //modify by remove_stats and add_stats
+      int32_t           net_votes = 0;	//含有某个标签的所有帖子的投票总数
+      uint32_t          top_posts = 0;	//含有某个标签的所有帖子的发帖总数
+      uint32_t          comments  = 0;  //含有某个标签的所有帖子的评论总数
       fc::uint128       total_trending = 0;
 };
 

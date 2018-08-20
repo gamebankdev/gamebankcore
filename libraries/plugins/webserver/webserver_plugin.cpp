@@ -86,6 +86,8 @@ class webserver_plugin_impl
          thread_pool_work( this->thread_pool_ios )
       {
          for( uint32_t i = 0; i < thread_pool_size; ++i )
+			 // bind to a pointer to member function, actually every thread in pool will calling "thread_pool_ios.run()" immediately,
+			 //inside run(), when async operation finished, it will call the completion handler function which has passed to the thread_pool_ios.post()
             thread_pool.create_thread( boost::bind( &asio::io_service::run, &thread_pool_ios ) );
       }
 
@@ -107,7 +109,7 @@ class webserver_plugin_impl
 
       boost::thread_group        thread_pool;
       asio::io_service           thread_pool_ios;
-      asio::io_service::work     thread_pool_work;
+      asio::io_service::work     thread_pool_work;//thread_pool_ios.run() will never return
 
       plugins::json_rpc::json_rpc_plugin* api;
       boost::signals2::connection         chain_sync_con;
@@ -124,6 +126,7 @@ void webserver_plugin_impl::start_webserver()
          {
             ws_server.clear_access_channels( websocketpp::log::alevel::all );
             ws_server.clear_error_channels( websocketpp::log::elevel::all );
+			//init ASIO transport policy by ws_ios
             ws_server.init_asio( &ws_ios );
             ws_server.set_reuse_addr( true );
 
@@ -137,8 +140,9 @@ void webserver_plugin_impl::start_webserver()
 
             ilog( "start listening for ws requests" );
             ws_server.listen( *ws_endpoint );
+			//inside start_accept() will call async_accept
             ws_server.start_accept();
-
+			//calling run() will block, until async operation finish
             ws_ios.run();
             ilog( "ws io service exit" );
          }
@@ -158,6 +162,7 @@ void webserver_plugin_impl::start_webserver()
          {
             http_server.clear_access_channels( websocketpp::log::alevel::all );
             http_server.clear_error_channels( websocketpp::log::elevel::all );
+			//init ASIO transport policy by http_ios
             http_server.init_asio( &http_ios );
             http_server.set_reuse_addr( true );
 
@@ -185,7 +190,7 @@ void webserver_plugin_impl::stop_webserver()
 
    if( http_server.is_listening() )
       http_server.stop_listening();
-
+   //make the thread_pool_ios.run() return
    thread_pool_ios.stop();
    thread_pool.join_all();
 
@@ -247,8 +252,10 @@ void webserver_plugin_impl::handle_http_message( websocket_server_type* server, 
    auto con = server->get_con_from_hdl( hdl );
    con->defer_http_response();
 
+   //a task(handler) is delivered to the task queue, which is executed randomly by a thread that calls the thread_pool_ios.run()
    thread_pool_ios.post( [con, this]()
    {
+	   //Gets the body of the HTTP object
       auto body = con->get_request_body();
 
       try
@@ -305,13 +312,16 @@ void webserver_plugin::set_program_options( options_description&, options_descri
 
 void webserver_plugin::plugin_initialize( const variables_map& options )
 {
+	//from config.ini
    auto thread_pool_size = options.at("webserver-thread-pool-size").as<thread_pool_size_t>();
    FC_ASSERT(thread_pool_size > 0, "webserver-thread-pool-size must be greater than 0");
    ilog("configured with ${tps} thread pool size", ("tps", thread_pool_size));
+   //create webserver_plugin_impl object
    my.reset(new detail::webserver_plugin_impl(thread_pool_size));
-
+   
    if( options.count( "webserver-http-endpoint" ) )
    {
+	   //get http endpoint from cmd args
       auto http_endpoint = options.at( "webserver-http-endpoint" ).as< string >();
       auto endpoints = fc::resolve_string_to_ip_endpoints( http_endpoint );
       FC_ASSERT( endpoints.size(), "webserver-http-endpoint ${hostname} did not resolve", ("hostname", http_endpoint) );
@@ -321,6 +331,7 @@ void webserver_plugin::plugin_initialize( const variables_map& options )
 
    if( options.count( "webserver-ws-endpoint" ) )
    {
+	   //get ws endpoint from cmd args
       auto ws_endpoint = options.at( "webserver-ws-endpoint" ).as< string >();
       auto endpoints = fc::resolve_string_to_ip_endpoints( ws_endpoint );
       FC_ASSERT( endpoints.size(), "ws-server-endpoint ${hostname} did not resolve", ("hostname", ws_endpoint) );
@@ -330,18 +341,19 @@ void webserver_plugin::plugin_initialize( const variables_map& options )
 
    if( options.count( "rpc-endpoint" ) )
    {
+	   //get rpc endpoint from cmd args
       auto endpoint = options.at( "rpc-endpoint" ).as< string >();
       auto endpoints = fc::resolve_string_to_ip_endpoints( endpoint );
       FC_ASSERT( endpoints.size(), "rpc-endpoint ${hostname} did not resolve", ("hostname", endpoint) );
 
       auto tcp_endpoint = tcp::endpoint( boost::asio::ip::address_v4::from_string( ( string )endpoints[0].get_address() ), endpoints[0].port() );
-
+	  //if not use http_endpoint, use rpc endpoint instead
       if( !my->http_endpoint )
       {
          my->http_endpoint = tcp_endpoint;
          ilog( "configured http to listen on ${ep}", ("ep", endpoints[0]) );
       }
-
+	  //if not use ws_endpoint, use rpc endpoint instead
       if( !my->ws_endpoint )
       {
          my->ws_endpoint = tcp_endpoint;
@@ -352,13 +364,16 @@ void webserver_plugin::plugin_initialize( const variables_map& options )
 
 void webserver_plugin::plugin_startup()
 {
+//webserver relying on the json_rpc_plugin for parsing JSON and rpc call
    my->api = appbase::app().find_plugin< plugins::json_rpc::json_rpc_plugin >();
    FC_ASSERT( my->api != nullptr, "Could not find API Register Plugin" );
 
    plugins::chain::chain_plugin* chain = appbase::app().find_plugin< plugins::chain::chain_plugin >();
    if( chain != nullptr && chain->get_state() != appbase::abstract_plugin::started )
    {
+//if chain_plugin is registered, must wait for it to start 
       ilog( "Waiting for chain plugin to start" );
+	  //connect signal and slot, the signal will be emited in chain_plugin::plugin_startup()
       my->chain_sync_con = chain->on_sync.connect( 0, [this]()
       {
          my->start_webserver();
@@ -366,6 +381,7 @@ void webserver_plugin::plugin_startup()
    }
    else
    {
+//if chain_plugin is not registered, the webserver is always launched
       my->start_webserver();
    }
 }

@@ -94,7 +94,7 @@ void transaction::get_required_authorities( flat_set< account_name_type >& activ
                                             flat_set< account_name_type >& posting,		   //操作所需的posting授权账号
                                             vector< authority >& other )const
 {
-//得到需要的认证key
+//得到交易所需要的相关账户
    for( const auto& op : operations )
       operation_get_required_authorities( op, active, owner, posting, other );
 }

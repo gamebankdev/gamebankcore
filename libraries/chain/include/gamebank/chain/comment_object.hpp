@@ -83,9 +83,14 @@ namespace gamebank { namespace chain {
          uint16_t          reward_weight = 0;
 
          /** tracks the total payout this comment has received over time, measured in GBD */
-         asset             total_payout_value = asset(0, GBD_SYMBOL);
-         asset             curator_payout_value = asset(0, GBD_SYMBOL);
-         asset             beneficiary_payout_value = asset( 0, GBD_SYMBOL );
+         //asset             total_payout_value = asset(0, GBD_SYMBOL);
+         //asset             curator_payout_value = asset(0, GBD_SYMBOL);
+         //asset             beneficiary_payout_value = asset( 0, GBD_SYMBOL );         
+		 
+		 /** tracks the total payout this comment has received over time, measured in GBC */
+         asset             total_payout_value = asset(0, GBC_SYMBOL);
+         asset             curator_payout_value = asset(0, GBC_SYMBOL);
+         asset             beneficiary_payout_value = asset( 0, GBC_SYMBOL);
 
          share_type        author_rewards = 0;
 

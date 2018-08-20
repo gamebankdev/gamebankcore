@@ -224,7 +224,7 @@ namespace detail
             }
          }
          /// END FETCH CATEGORY STATE
-
+		 //for reputation
          set<string> accounts;
 
          vector<string> part; part.reserve(4);
@@ -233,10 +233,12 @@ namespace detail
 
          auto tag = fc::to_lower( part[1] );
 
-         if( part[0].size() && part[0][0] == '@' ) {
-            auto acnt = part[0].substr(1);
-            _state.accounts[acnt] = extended_account( database_api::api_account_object( _db.get_account( acnt ), _db ) );
+		 //home page
+         if( part[0].size() && part[0][0] == '@' ) {//BEGIN CLICK AUTHOR NAME
+            auto acnt = part[0].substr(1);			//get author name
+            _state.accounts[acnt] = extended_account( database_api::api_account_object( _db.get_account( acnt ), _db ) );	//author name to obeject
 
+			//Gets the tag information used by the author, <tag_name, total_posts>
             if( _tags_api )
                _state.accounts[acnt].tags_usage = _tags_api->get_tags_used_by_author( { acnt } ).tags;
 
@@ -253,6 +255,7 @@ namespace detail
             auto& eacnt = _state.accounts[acnt];
             if( part[1] == "transfers" )
             {
+				//Personal operation record
                if( _account_history_api )
                {
                   legacy_operation l_op;
@@ -266,7 +269,9 @@ namespace detail
                         case operation::tag<interest_operation>::value:
                         case operation::tag<transfer_operation>::value:
                         case operation::tag<liquidity_reward_operation>::value:
+						//reward for Posting comments
                         case operation::tag<author_reward_operation>::value:
+						//reward for votor
                         case operation::tag<curation_reward_operation>::value:
                         case operation::tag<comment_benefactor_reward_operation>::value:
                         case operation::tag<transfer_to_savings_operation>::value:
@@ -281,6 +286,7 @@ namespace detail
                         case operation::tag<claim_reward_balance_operation>::value:
                            if( item.second.op.visit( visitor ) )
                            {
+							  //visitor.l_op is one of above operation, the member data of operation object will be display
                               eacnt.transfer_history.emplace( item.first, api_operation_object( item.second, visitor.l_op ) );
                            }
                            break;
@@ -310,11 +316,12 @@ namespace detail
                      }
                   }
                }
-            }
-            else if( part[1] == "recent-replies" )
+            }//end transfer
+            else if( part[1] == "recent-replies" )		//like /@author_name/recent-replies
             {
                if( _tags_api )
                {
+				   //Gets all of the next level comments, sorted by latest time
                   auto replies = _tags_api->get_replies_by_last_update( { acnt, "", 50 } ).discussions;
                   eacnt.recent_replies = vector< string >();
 
@@ -336,7 +343,8 @@ namespace detail
                   }
                }
             }
-            else if( part[1] == "posts" || part[1] == "comments" )
+			//Show Posting/comment records
+            else if( part[1] == "posts" || part[1] == "comments" )		//like /@author_name/posts or /@author_name/comments
             {
       #ifndef IS_LOW_MEM
                int count = 0;
@@ -361,7 +369,7 @@ namespace detail
                }
       #endif
             }
-            else if( part[1].size() == 0 || part[1] == "blog" )
+            else if( part[1].size() == 0 || part[1] == "blog" )		//like /@author_name or @author_name/blog 
             {
                if( _follow_api )
                {
@@ -384,7 +392,7 @@ namespace detail
                   }
                }
             }
-            else if( part[1].size() == 0 || part[1] == "feed" )
+            else if( part[1].size() == 0 || part[1] == "feed" )		//like /@author_name or @author_name/feed 
             {
                if( _follow_api )
                {
@@ -409,9 +417,11 @@ namespace detail
                   }
                }
             }
-         }
+         }//END CLICK AUTHOR NAME
+
          /// pull a complete discussion
-         else if( part[1].size() && part[1][0] == '@' )
+		 //TODO REMOVE
+         else if( part[1].size() && part[1][0] == '@' )		//CLICK THE TITLE OF POST....like /tag/@author_name/permlink
          {
             auto account  = part[1].substr( 1 );
             auto slug     = part[2];
@@ -435,6 +445,7 @@ namespace detail
                _state.witnesses[w.owner] = w;
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "trending"  )
          {
             if( _tags_api )
@@ -455,6 +466,8 @@ namespace detail
                }
             }
          }
+		 //Show posts with the highest payout
+		 //TODO REMOVE
          else if( part[0] == "payout"  )
          {
             if( _tags_api )
@@ -475,6 +488,8 @@ namespace detail
                }
             }
          }
+		 //Show disccusions that receive the highest rewards
+		 //TODO REMOVE
          else if( part[0] == "payout_comments"  )
          {
             if( _tags_api )
@@ -495,6 +510,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "promoted" )
          {
             if( _tags_api )
@@ -515,6 +531,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "responses"  )
          {
             if( _tags_api )
@@ -535,6 +552,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( !part[0].size() || part[0] == "hot" )
          {
             if( _tags_api )
@@ -555,6 +573,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( !part[0].size() || part[0] == "promoted" )
          {
             if( _tags_api )
@@ -575,6 +594,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "votes"  )
          {
             if( _tags_api )
@@ -595,6 +615,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "cashout"  )
          {
             if( _tags_api )
@@ -615,6 +636,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "active"  )
          {
             if( _tags_api )
@@ -642,19 +664,24 @@ namespace detail
                tags::discussion_query q;
                q.tag = tag;
                q.limit = 20;
-               q.truncate_body = 1024;
-               auto trending_disc = _tags_api->get_discussions_by_created( q ).discussions;
+               q.truncate_body = 0;
+			   auto discussion_result = _tags_api->get_discussions_by_created(q);
+			   auto created_disc = discussion_result.discussions;
+			   _state.total_posts = discussion_result.total_post_counts;
 
+			   ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
                auto& didx = _state.discussion_idx[tag];
-               for( const auto& d : trending_disc )
+			   
+               for( auto& d : created_disc)
                {
                   string key = d.author + "/" + d.permlink;
                   didx.created.push_back( key );
-                  if( d.author.size() ) accounts.insert(d.author);
+				  recursively_fetch_content(_state, d, accounts);
                   _state.content[key] = std::move(d);
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "recent"  )
          {
             if( _tags_api )
@@ -675,6 +702,7 @@ namespace detail
                }
             }
          }
+		 //TODO REMOVE
          else if( part[0] == "tags" )
          {
             if( _tags_api )
@@ -693,6 +721,7 @@ namespace detail
             elog( "What... no matches" );
          }
 
+		 //show reputation of each participant in the discussion
          for( const auto& a : accounts )
          {
             _state.accounts.erase("");
@@ -708,6 +737,7 @@ namespace detail
             }
          }
 
+		 //voting information for each discussion
          for( auto& d : _state.content )
          {
             d.second.active_votes = get_active_votes( { fc::variant( d.second.author ), fc::variant( d.second.permlink ) } );
@@ -1319,6 +1349,7 @@ namespace detail
 
       while( itr != idx.end() && itr->comment == cid )
       {
+	    //The current vote corresponds to this comment
          const auto& vo = _db.get( itr->voter );
          tags::vote_state vstate;
          vstate.voter = vo.name;
@@ -1473,17 +1504,41 @@ namespace detail
    {
       CHECK_ARG_SIZE( 1 )
       FC_ASSERT( _tags_api, "tags_api_plugin not enabled." );
-
-      auto discussions = _tags_api->get_discussions_by_created(
-         args[0].as< tags::get_discussions_by_created_args >() ).discussions;
-      vector< discussion > result;
-
-      for( auto& d : discussions )
+	  state _state;
+	  _state.props = get_dynamic_global_properties({});
+	  set<string> accounts;
+	  tags::discussion_query q = args[0].as< tags::get_discussions_by_created_args >();
+      auto created_disc = _tags_api->get_discussions_by_created( q ).discussions;
+	  auto& didx = _state.discussion_idx[q.tag];
+      for( auto& d : created_disc)
       {
-         result.push_back( discussion( d ) );
+		 string key = d.author + "/" + d.permlink;
+		 didx.created.push_back(key);
+		 recursively_fetch_content(_state, d, accounts);
+		 _state.content[key] = std::move(d);
       }
 
-      return result;
+	  for (const auto& a : accounts)
+	  {
+		  _state.accounts.erase("");
+		  _state.accounts[a] = extended_account(database_api::api_account_object(_db.get_account(a), _db));
+
+		  if (_follow_api)
+		  {
+			  _state.accounts[a].reputation = _follow_api->get_account_reputations({ a, 1 }).reputations[0].reputation;
+		  }
+		  else if (_reputation_api)
+		  {
+			  _state.accounts[a].reputation = _reputation_api->get_account_reputations({ a, 1 }).reputations[0].reputation;
+		  }
+	  }
+
+	  for (auto& d : _state.content)
+	  {
+		  d.second.active_votes = get_active_votes({ fc::variant(d.second.author), fc::variant(d.second.permlink) });
+	  }
+
+      return _state;
    }
 
    DEFINE_API_IMPL( condenser_api_impl, get_discussions_by_active )
@@ -2093,11 +2148,13 @@ namespace detail
    {
       try
       {
+		  //All participants in the discussion
          if( root.author.size() )
             referenced_accounts.insert( root.author );
 
          if( _tags_api )
          {
+			 //get all the comments below the author and recursively return each comment to its next level until no reply is received
             auto replies = _tags_api->get_content_replies( { root.author, root.permlink } ).discussions;
             for( auto& r : replies )
             {
@@ -2105,7 +2162,7 @@ namespace detail
                {
                   recursively_fetch_content( _state, r, referenced_accounts );
                   root.replies.push_back( r.author + "/" + r.permlink  );
-                  _state.content[r.author + "/" + r.permlink] = std::move( r );
+                  _state.content[r.author + "/" + r.permlink] = std::move( r );//<key, dis>
 
                   if( r.author.size() )
                      referenced_accounts.insert( r.author );
@@ -2153,8 +2210,9 @@ namespace detail
          u256 r2 = chain::util::to256( vshares ); //to256(abs_net_rshares);
          r2 *= pot.amount.value;
          r2 /= total_r2;
-
+		 //Post/comment to be rewarded
          d.pending_payout_value = legacy_asset::from_asset( asset( static_cast<uint64_t>(r2), pot.symbol ) );
+		 //ilog("debug info: the pending_payout_value(r2) is ${value}", ("value", d.pending_payout_value));
 
          if( _follow_api )
          {
@@ -2167,6 +2225,7 @@ namespace detail
       }
 
       if( d.parent_author != GAMEBANK_ROOT_POST_PARENT )
+		  //it's a comment, not use the parent's cashout_time!!
          d.cashout_time = _db.calculate_discussion_payout_time( _db.get< chain::comment_object >( d.id ) );
 
       if( d.body.size() > 1024*128 )

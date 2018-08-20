@@ -642,7 +642,7 @@ void comment_evaluator::do_apply( const comment_operation& o )
       });
 
       id = new_comment.id;
-
+	  ilog("new comment id = ${id}", ("id", id));
    #ifndef IS_LOW_MEM
       _db.create< comment_content_object >( [&]( comment_content_object& con )
       {
@@ -1192,7 +1192,7 @@ void vote_evaluator::do_apply( const vote_operation& o )
    FC_ASSERT( used_power <= current_power, "Account does not have enough power to vote." );
 
    int64_t abs_rshares    = ((uint128_t( _db.get_effective_vesting_shares( voter, GBS_SYMBOL ).amount.value ) * used_power) / (GAMEBANK_100_PERCENT)).to_uint64();
-   
+   ilog("debug vote: abs_rshares == ${rshares}, used_power == ${power}, vest_shares == ${vs}", ("rshares", abs_rshares)("power", used_power)("vs", voter.vesting_shares.amount.value));
 
    if( _db.has_hardfork( GAMEBANK_HARDFORK_0_1 ) )
    {

@@ -15,9 +15,9 @@ void follow_evaluator::do_apply( const follow_operation& o )
       static map< string, follow_type > follow_type_map = []()
       {
          map< string, follow_type > follow_map;
-         follow_map[ "undefined" ] = follow_type::undefined;
-         follow_map[ "blog" ] = follow_type::blog;
-         follow_map[ "ignore" ] = follow_type::ignore;
+         follow_map[ "undefined" ] = follow_type::undefined;	//0
+         follow_map[ "blog" ] = follow_type::blog;				//1
+         follow_map[ "ignore" ] = follow_type::ignore;			//2
 
          return follow_map;
       }();
@@ -33,11 +33,11 @@ void follow_evaluator::do_apply( const follow_operation& o )
          switch( follow_type_map[ target ] )
          {
             case blog:
-               what |= 1 << blog;
+               what |= 1 << blog;		//what is 0010B
                is_following = true;
                break;
             case ignore:
-               what |= 1 << ignore;
+               what |= 1 << ignore;		//what is 0100B
                break;
             default:
                //ilog( "Encountered unknown option ${o}", ("o", target) );
@@ -51,7 +51,8 @@ void follow_evaluator::do_apply( const follow_operation& o )
       bool was_followed = false;
 
       if( itr == idx.end() )
-      {
+      {//there is no relationship between follower and following
+		  
          _db.create< follow_object >( [&]( follow_object& obj )
          {
             obj.follower = o.follower;
@@ -60,7 +61,10 @@ void follow_evaluator::do_apply( const follow_operation& o )
          });
       }
       else
-      {
+	  {//There is already a relationship between followers and followers
+		  //get the relationship between followers and followers
+		  //if "blog" last time, this time will unfollow
+		  //if not "blog" last time, this time will following 
          was_followed = itr->what & 1 << blog;
 
          _db.modify( *itr, [&]( follow_object& obj )
@@ -68,11 +72,12 @@ void follow_evaluator::do_apply( const follow_operation& o )
             obj.what = what;
          });
       }
-
+	  //update the follower's following counts
       const auto& follower = _db.find< follow_count_object, by_account >( o.follower );
 
       if( follower == nullptr )
       {
+		  //the follower has following nobody before
          _db.create< follow_count_object >( [&]( follow_count_object& obj )
          {
             obj.account = o.follower;
@@ -83,6 +88,7 @@ void follow_evaluator::do_apply( const follow_operation& o )
       }
       else
       {
+		  //the follower has following someone before
          _db.modify( *follower, [&]( follow_count_object& obj )
          {
             if( was_followed )
@@ -92,12 +98,14 @@ void follow_evaluator::do_apply( const follow_operation& o )
          });
       }
 
-      const auto& following = _db.find< follow_count_object, by_account >( o.following );
+	  //update the following's follower counts
+	  const auto& following = _db.find< follow_count_object, by_account >(o.following);
 
       if( following == nullptr )
       {
          _db.create< follow_count_object >( [&]( follow_count_object& obj )
          {
+			 //the following has no follower before
             obj.account = o.following;
 
             if( is_following )
@@ -106,6 +114,7 @@ void follow_evaluator::do_apply( const follow_operation& o )
       }
       else
       {
+		  //the following already has followers before
          _db.modify( *following, [&]( follow_count_object& obj )
          {
             if( was_followed )

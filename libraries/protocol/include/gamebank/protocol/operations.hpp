@@ -102,6 +102,7 @@ namespace gamebank { namespace protocol {
 
    bool is_virtual_operation( const operation& op );
 
+   bool is_need_update_bandwidth_operation(const operation& op);
 } } // gamebank::protocol
 
 /*namespace fc {

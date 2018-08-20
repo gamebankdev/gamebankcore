@@ -248,10 +248,20 @@ namespace detail {
       _dupe_customs.clear();
    }
 
+   //todo: may move to on_pre_apply_operation?
    void witness_plugin_impl::on_pre_apply_transaction( const chain::transaction_notification& note )
    {
       const signed_transaction& trx = note.transaction;
-      flat_set< account_name_type > required; vector<authority> other;
+	  for (const auto& op : trx.operations)
+	  {
+		  if (!is_need_update_bandwidth_operation(op))
+		  {
+			  ilog("debug: operation need not to update bandwidth");
+			  return;
+		  }
+	  }
+      
+	  flat_set< account_name_type > required; vector<authority> other;
       trx.get_required_authorities( required, required, required, other );
 
       auto trx_size = fc::raw::pack_size(trx);
