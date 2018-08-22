@@ -7,9 +7,6 @@
 
 #ifdef IS_TEST_NET
 #define GAMEBANK_BLOCKCHAIN_VERSION              ( version(0, 1, 0) )
-
-//#define GAMEBANK_INIT_PRIVATE_KEY                (fc::ecc::private_key::regenerate(fc::sha256::hash(std::string("wzwl_gamebank_201808"))))
-//#define GAMEBANK_INIT_PUBLIC_KEY_STR             (std::string( gamebank::protocol::public_key_type(GAMEBANK_INIT_PRIVATE_KEY.get_public_key()) ))
 #define GAMEBANK_INIT_PUBLIC_KEY_STR             "TST6MH4Q1JbHp2AYmBpuux6nAbiQEW4nyunbVAdHpgWPoYPushxCo"
 #define GAMEBANK_CHAIN_ID_NAME "testnet"
 #define GAMEBANK_CHAIN_ID (fc::sha256::hash(GAMEBANK_CHAIN_ID_NAME))
