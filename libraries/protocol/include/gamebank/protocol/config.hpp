@@ -8,8 +8,9 @@
 #ifdef IS_TEST_NET
 #define GAMEBANK_BLOCKCHAIN_VERSION              ( version(0, 1, 0) )
 
-#define GAMEBANK_INIT_PRIVATE_KEY                (fc::ecc::private_key::regenerate(fc::sha256::hash(std::string("init_key"))))
-#define GAMEBANK_INIT_PUBLIC_KEY_STR             (std::string( gamebank::protocol::public_key_type(GAMEBANK_INIT_PRIVATE_KEY.get_public_key()) ))
+//#define GAMEBANK_INIT_PRIVATE_KEY                (fc::ecc::private_key::regenerate(fc::sha256::hash(std::string("wzwl_gamebank_201808"))))
+//#define GAMEBANK_INIT_PUBLIC_KEY_STR             (std::string( gamebank::protocol::public_key_type(GAMEBANK_INIT_PRIVATE_KEY.get_public_key()) ))
+#define GAMEBANK_INIT_PUBLIC_KEY_STR             "TST6MH4Q1JbHp2AYmBpuux6nAbiQEW4nyunbVAdHpgWPoYPushxCo"
 #define GAMEBANK_CHAIN_ID_NAME "testnet"
 #define GAMEBANK_CHAIN_ID (fc::sha256::hash(GAMEBANK_CHAIN_ID_NAME))
 #define GAMEBANK_ADDRESS_PREFIX                  "TST"
@@ -39,10 +40,10 @@
 
 #define GAMEBANK_BLOCKCHAIN_VERSION              ( version(0, 0, 1) )
 
-#define GAMEBANK_INIT_PUBLIC_KEY_STR             "GBK8GC13uCZbP44HzMLV6zPZGwVQ8Nt4Kji8PapsPiNq1BK153XTX"
+#define GAMEBANK_INIT_PUBLIC_KEY_STR             "TST6MH4Q1JbHp2AYmBpuux6nAbiQEW4nyunbVAdHpgWPoYPushxCo"
 #define GAMEBANK_CHAIN_ID_NAME ""
 #define GAMEBANK_CHAIN_ID fc::sha256()
-#define GAMEBANK_ADDRESS_PREFIX                  "GBK"
+#define GAMEBANK_ADDRESS_PREFIX                  "TST"
 
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1458835200))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1458838800))
