@@ -129,7 +129,7 @@ struct discussion_query_result
 {
    vector< discussion > discussions;
    //The total number of posts for a particular tag(only post not comment)
-   uint32_t total_post_counts;
+   uint32_t total_post_counts = 0;
 };
 
 typedef get_discussion_args      get_content_replies_args;
