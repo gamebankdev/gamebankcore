@@ -774,20 +774,35 @@ public:
          auto accounts = result.as<vector<condenser_api::api_account_object>>();
          asset total_gbc;
          asset total_vest(0, GBS_SYMBOL );
+         asset total_received_vest(0, GBS_SYMBOL );
+         asset total_delegate_vest(0, GBS_SYMBOL );
          asset total_gbd(0, GBD_SYMBOL );
+		 out << std::left << std::setw(17) << "ACCOUNT"
+			 << std::right << std::setw(18) << "GBC_BALANCE" << " "
+			 << std::right << std::setw(26) << "VEST_SHARES" << " "
+			 << std::right << std::setw(26) << "RECEIVED_VEST" << " "
+			 << std::right << std::setw(26) << "DELEGATE_VEST" << " "
+			 << std::right << std::setw(16) << "GBD_BALANCE" << "\n";
          for( const auto& a : accounts ) {
             total_gbc += a.balance.to_asset();
             total_vest  += a.vesting_shares.to_asset();
+			total_received_vest += a.received_vesting_shares.to_asset();
+			total_delegate_vest += a.delegated_vesting_shares.to_asset();
             total_gbd  += a.gbd_balance.to_asset();
+			out << "-------------------------------------------------------------------------\n";
             out << std::left << std::setw( 17 ) << std::string(a.name)
                 << std::right << std::setw(18) << fc::variant(a.balance).as_string() <<" "
                 << std::right << std::setw(26) << fc::variant(a.vesting_shares).as_string() <<" "
+                << std::right << std::setw(26) << fc::variant(a.received_vesting_shares).as_string() <<" "
+                << std::right << std::setw(26) << fc::variant(a.delegated_vesting_shares).as_string() <<" "
                 << std::right << std::setw(16) << fc::variant(a.gbd_balance).as_string() <<"\n";
          }
          out << "-------------------------------------------------------------------------\n";
             out << std::left << std::setw( 17 ) << "TOTAL"
                 << std::right << std::setw(18) << legacy_asset::from_asset(total_gbc).to_string() <<" "
                 << std::right << std::setw(26) << legacy_asset::from_asset(total_vest).to_string() <<" "
+                << std::right << std::setw(26) << legacy_asset::from_asset(total_received_vest).to_string() <<" "
+                << std::right << std::setw(26) << legacy_asset::from_asset(total_delegate_vest).to_string() <<" "
                 << std::right << std::setw(16) << legacy_asset::from_asset(total_gbd).to_string() <<"\n";
          return out.str();
       };
@@ -1262,8 +1277,8 @@ condenser_api::legacy_signed_transaction wallet_api::create_account_with_keys(
    op.memo_key = memo;
    op.json_metadata = json_meta;
    //创建账户费用
-   op.fee = my->_remote_api->get_chain_properties().account_creation_fee * asset( GAMEBANK_CREATE_ACCOUNT_WITH_GBC_MODIFIER, GBC_SYMBOL );
-
+   //op.fee = my->_remote_api->get_chain_properties().account_creation_fee * asset( GAMEBANK_CREATE_ACCOUNT_WITH_GBC_MODIFIER, GBC_SYMBOL );
+   op.fee = asset(GAMEBANK_MIN_ACCOUNT_CREATION_FEE, GBC_SYMBOL);
    //创建新账户也是一个交易
    signed_transaction tx;
    tx.operations.push_back(op);
