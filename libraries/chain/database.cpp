@@ -3114,6 +3114,7 @@ void database::_apply_block( const signed_block& next_block )
    clear_expired_transactions();
    clear_expired_orders();
    clear_expired_nonfungible_funds_on_sale();
+   reclaim_account_creation_delegations();
    clear_expired_delegations();
    //调用洗牌算法
    update_witness_schedule(*this);
@@ -4101,6 +4102,29 @@ void database::clear_expired_delegations()
       remove( *itr );
       itr = delegations_by_exp.begin();
    }
+}
+
+void database::reclaim_account_creation_delegations()
+{
+	auto now = head_block_time();
+	const auto& didx = get_index< vesting_delegation_index>().indices().get< by_delegation_time >();
+	auto itr = didx.lower_bound(GAMEBANK_INIT_MINER_NAME);
+	while (itr != didx.end() && itr->delegator == GAMEBANK_INIT_MINER_NAME && itr->min_delegation_time < now)
+	{
+			modify(get_account(itr->delegatee), [&](account_object& a)
+			{
+				a.received_vesting_shares -= itr->vesting_shares;
+			});
+			create< vesting_delegation_expiration_object >([&](vesting_delegation_expiration_object& obj)
+			{
+				obj.delegator = itr->delegator;
+				obj.vesting_shares = itr->vesting_shares;
+				obj.expiration = std::max(now + get_dynamic_global_properties().delegation_return_period, itr->min_delegation_time);
+			});
+			const auto &current = *itr;
+			remove(current);
+			itr++;
+	}	
 }
 
 //修改账户存款
