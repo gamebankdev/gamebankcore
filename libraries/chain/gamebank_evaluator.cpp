@@ -260,54 +260,59 @@ void initialize_account_object( account_object& acc, const account_name_type& na
 
 void account_create_evaluator::do_apply( const account_create_operation& o )
 {
-   const auto& creator = _db.get_account( o.creator );
-
+   /*
+   * new account must created by initminer, and the initminer will give a certain amount of vest shares to the new account by delegation
+   * the witnesses will publish the amount of vest shares that will be delegated to new account
+   */
+   const auto &creator = _db.get_account(o.creator);
+   FC_ASSERT(creator.name == GAMEBANK_INIT_MINER_NAME, "New account must created by initminer", ("creator", creator.name));
    const auto& props = _db.get_dynamic_global_properties();
+   asset init_delegation_vest_shares = o.fee * props.get_vesting_share_price();
+   
+   //ilog("o.fee is ${fee}, init_delegation_vest_shares is ${vest}", ("fee", legacy_asset.from_asset(o.fee).to_string())("vest", legacy_asset.from_asset(init_delegation_vest_shares).to_string()));
+   FC_ASSERT(creator.vesting_shares - creator.delegated_vesting_shares >= init_delegation_vest_shares, "Insufficient vest shares to create account.",
+															("required", init_delegation_vest_shares)
+															("creator.vesting_shares", creator.vesting_shares)
+															("creator.delegated_vesting_shares", creator.delegated_vesting_shares));
+   
+   verify_authority_accounts_exist(_db, o.owner, o.new_account_name, authority::owner);
+   verify_authority_accounts_exist(_db, o.active, o.new_account_name, authority::active);
+   verify_authority_accounts_exist(_db, o.posting, o.new_account_name, authority::posting);
 
-   FC_ASSERT( creator.balance >= o.fee, "Insufficient balance to create account.", ( "creator.balance", creator.balance )( "required", o.fee ) );
+   //modify the vest shares of initminer
+   _db.modify(creator, [&](account_object& c) {
+	   c.delegated_vesting_shares += init_delegation_vest_shares;
+   });
 
-   if( !_db.has_hardfork( GAMEBANK_HARDFORK_0_1 ) )
+   _db.create< account_object >([&](account_object& acc)
    {
-      const witness_schedule_object& wso = _db.get_witness_schedule_object();
-      FC_ASSERT( o.fee >= asset( wso.median_props.account_creation_fee.amount * GAMEBANK_CREATE_ACCOUNT_WITH_GBC_MODIFIER, GBC_SYMBOL ), "Insufficient Fee: ${f} required, ${p} provided.",
-                 ("f", wso.median_props.account_creation_fee * asset( GAMEBANK_CREATE_ACCOUNT_WITH_GBC_MODIFIER, GBC_SYMBOL ) )
-                 ("p", o.fee) );
+	   initialize_account_object(acc, o.new_account_name, o.memo_key, props, false /*mined*/, o.creator, _db.get_hardfork());
+	   acc.received_vesting_shares = init_delegation_vest_shares;
+#ifndef IS_LOW_MEM
+	   from_string(acc.json_metadata, o.json_metadata);
+#endif
+   });
+
+   _db.create< account_authority_object >([&](account_authority_object& auth)
+   {
+	   auth.account = o.new_account_name;
+	   auth.owner = o.owner;
+	   auth.active = o.active;
+	   auth.posting = o.posting;
+	   auth.last_owner_update = fc::time_point_sec::min();
+   });
+
+   if (init_delegation_vest_shares.amount > 0)
+   {
+	   _db.create< vesting_delegation_object >([&](vesting_delegation_object& vdo)
+	   {
+		   vdo.delegator = o.creator;
+		   vdo.delegatee = o.new_account_name;
+		   vdo.vesting_shares = init_delegation_vest_shares;
+		   //the time system takes back the delegated vest shares
+		   vdo.min_delegation_time = _db.head_block_time() + GAMEBANK_CREATE_ACCOUNT_DELEGATION_TIME;
+	   });   
    }
-   else
-   {
-      const witness_schedule_object& wso = _db.get_witness_schedule_object();
-      FC_ASSERT( o.fee >= wso.median_props.account_creation_fee, "Insufficient Fee: ${f} required, ${p} provided.",
-                 ("f", wso.median_props.account_creation_fee)
-                 ("p", o.fee) );
-   }
-
-   verify_authority_accounts_exist( _db, o.owner, o.new_account_name, authority::owner );
-   verify_authority_accounts_exist( _db, o.active, o.new_account_name, authority::active );
-   verify_authority_accounts_exist( _db, o.posting, o.new_account_name, authority::posting );
-
-   _db.modify( creator, [&]( account_object& c ){
-      c.balance -= o.fee;
-   });
-
-   const auto& new_account = _db.create< account_object >( [&]( account_object& acc )
-   {
-      initialize_account_object( acc, o.new_account_name, o.memo_key, props, false /*mined*/, o.creator, _db.get_hardfork() );
-      #ifndef IS_LOW_MEM
-         from_string( acc.json_metadata, o.json_metadata );
-      #endif
-   });
-
-   _db.create< account_authority_object >( [&]( account_authority_object& auth )
-   {
-      auth.account = o.new_account_name;
-      auth.owner = o.owner;
-      auth.active = o.active;
-      auth.posting = o.posting;
-      auth.last_owner_update = fc::time_point_sec::min();
-   });
-
-   if( o.fee.amount > 0 )
-      _db.create_vesting( new_account, o.fee );
 }
 
 void account_create_with_delegation_evaluator::do_apply( const account_create_with_delegation_operation& o )
