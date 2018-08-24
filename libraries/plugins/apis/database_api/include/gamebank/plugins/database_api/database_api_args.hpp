@@ -34,6 +34,7 @@ enum sort_order_type
    by_complete_from_id,
    by_to_complete,
    by_delegation,
+   by_delegation_time,
    by_account_expiration,
    by_conversion_date,
    by_cashout_time,
@@ -578,6 +579,7 @@ FC_REFLECT_ENUM( gamebank::plugins::database_api::sort_order_type,
    (by_complete_from_id)
    (by_to_complete)
    (by_delegation)
+   (by_delegation_time)
    (by_account_expiration)
    (by_conversion_date)
    (by_cashout_time)

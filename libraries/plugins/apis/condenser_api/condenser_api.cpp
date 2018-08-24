@@ -2212,8 +2212,6 @@ namespace detail
          r2 /= total_r2;
 		 //Post/comment to be rewarded
          d.pending_payout_value = legacy_asset::from_asset( asset( static_cast<uint64_t>(r2), pot.symbol ) );
-		 //ilog("debug info: the pending_payout_value(r2) is ${value}", ("value", d.pending_payout_value));
-
          if( _follow_api )
          {
             d.author_reputation = _follow_api->get_account_reputations( follow::get_account_reputations_args( { d.author, 1} ) ).reputations[0].reputation;
