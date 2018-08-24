@@ -500,6 +500,7 @@ namespace gamebank { namespace chain {
          void clear_expired_orders();
          void clear_expired_nonfungible_funds_on_sale();
          void clear_expired_delegations();
+		 void reclaim_account_creation_delegations();
          void process_header_extensions( const signed_block& next_block );
 
          void init_hardforks();
