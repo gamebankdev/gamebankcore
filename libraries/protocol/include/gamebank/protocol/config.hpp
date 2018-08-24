@@ -21,7 +21,7 @@
 #define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::minutes(5))
 
 
-#define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          0
+#define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          (int64_t( 150000 ) * int64_t( 1000 ))
 
 #define GAMEBANK_OWNER_AUTH_RECOVERY_PERIOD                  fc::seconds(60)
 #define GAMEBANK_ACCOUNT_RECOVERY_REQUEST_EXPIRATION_PERIOD  fc::seconds(12)
