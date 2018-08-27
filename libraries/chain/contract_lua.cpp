@@ -100,6 +100,17 @@ namespace gamebank { namespace chain {
 				L->extend.caller_name[caller_name.length()] = '\0';
 			}
 
+			void set_extend_arg(int memory_limit, int opcode_limit)
+			{
+				L->extend.memory_limit = memory_limit;
+				L->extend.opcode_execute_limit = opcode_limit;
+			}
+
+			int get_current_opcount()
+			{
+				return L->extend.current_opcode_execute_count;
+			}
+
 			bool compile_check(Proto* proto, Proto* parent_proto)
 			{
 				// opcodes
@@ -110,9 +121,9 @@ namespace gamebank { namespace chain {
 					int a = GETARG_A(i);
 					int b = GETARG_B(i);
 					int c = GETARG_C(i);
-					int ax = GETARG_Ax(i);
-					int bx = GETARG_Bx(i);
-					int sbx = GETARG_sBx(i);
+					//int ax = GETARG_Ax(i);
+					//int bx = GETARG_Bx(i);
+					//int sbx = GETARG_sBx(i);
 					int line = getfuncline(proto, pc);
 
 					switch (o)
@@ -221,7 +232,7 @@ namespace gamebank { namespace chain {
 
 			bool deploy(const std::string& data)
 			{
-				int stack_pos = lua_gettop(L);
+				//int stack_pos = lua_gettop(L);
 				//dlog("deploy 1 stack_pos=%d\n", stack_pos);
 				int data_size = data.length();
 				std::string contract_name = contract.name;
@@ -237,7 +248,7 @@ namespace gamebank { namespace chain {
 					//FC_ASSERT(ret == 0, "contract compile error");
 					return false;
 				}
-				stack_pos = lua_gettop(L);
+				//stack_pos = lua_gettop(L);
 				int type = lua_type(L, -1);
 				//printf("deploy 2 stack_pos=%d type=%d\n", stack_pos, type);
 				LClosure* lc = clLvalue(L->top - 1);
@@ -253,13 +264,31 @@ namespace gamebank { namespace chain {
 				ret = lua_pcall(L, 0, LUA_MULTRET, 0);
 				if (ret != 0)
 				{
-					const char* str = lua_tostring(L, -1);
-					if (str)
-					{
-						//printf("lua_pcall: %s\n", str);
-						elog("lua_pcall Error: ${err}", ("err", str));
-						lua_pop(L, 1);
-						return false;
+					if (L->extend.error_no != LUA_EXTEND_OK) {
+						switch (L->extend.error_no)
+						{
+						case LUA_EXTEND_THROW:
+							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_THROW"));
+							break;
+						case LUA_EXTEND_MEM_ERR:
+							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_MEM_ERR"));
+							break;
+						case LUA_EXTEND_OPCODE_ERR:
+							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_OPCODE_ERR"));
+							break;
+						default:
+							break;
+						}
+					}
+					else {
+						const char* str = lua_tostring(L, -1);
+						if (str)
+						{
+							//printf("lua_pcall: %s\n", str);
+							elog("lua_pcall Error: ${err}", ("err", str));
+							lua_pop(L, 1);
+							return false;
+						}
 					}
 					//FC_ASSERT(ret == 0, "contract compile error");
 				}
@@ -296,10 +325,26 @@ namespace gamebank { namespace chain {
 				}
 				if (lua_pcall(L, lua_gettop(L) - (oldStackPos + 1), LUA_MULTRET, 0) != 0)
 				{
-					const char* str = lua_tostring(L, -1);
-					if (str != NULL)
-					{
-						elog("lua_pcall Error: ${err}", ("err", str));
+					if (L->extend.error_no != LUA_EXTEND_OK) {
+						switch (L->extend.error_no)
+						{
+						case LUA_EXTEND_THROW:
+							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_THROW"));
+							break;
+						case LUA_EXTEND_MEM_ERR:
+							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_MEM_ERR"));
+							break;
+						case LUA_EXTEND_OPCODE_ERR:
+							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_OPCODE_ERR"));
+							break;
+						default:
+							break;
+						}
+					} else {
+						const char* str = lua_tostring(L, -1);
+						if (str != NULL) {
+							elog("lua_pcall Error: ${err}", ("err", str));
+						}
 					}
 					lua_settop(L, oldStackPos);
 					return false;
@@ -409,6 +454,16 @@ namespace gamebank { namespace chain {
 	void contract_lua::set_extend(const account_name_type& contract_name, const account_name_type& caller_name)
 	{
 		return my->set_extend(contract_name, caller_name);
+	}
+
+	void contract_lua::set_extend_arg(int memory_limit, int opcode_limit)
+	{
+		return my->set_extend_arg(memory_limit, opcode_limit);
+	}
+
+	int contract_lua::get_current_opcount()
+	{
+		return my->get_current_opcount();
 	}
 
 }}

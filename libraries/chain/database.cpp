@@ -1133,6 +1133,16 @@ void database::notify_post_apply_transaction( const transaction_notification& no
    GAMEBANK_TRY_NOTIFY( _post_apply_transaction_signal, note )
 }
 
+void database::notify_remain_bandwidth(bandwidth_notification& note)
+{
+	GAMEBANK_TRY_NOTIFY(_remain_bandwidth_signal, note)
+}
+
+void database::notify_update_bandwidth(bandwidth_notification& note)
+{
+	GAMEBANK_TRY_NOTIFY(_update_bandwidth_signal, note)
+}
+
 //根据指定的时间槽的获取区块生产证人
 account_name_type database::get_scheduled_witness( uint32_t slot_num )const
 {
@@ -3586,6 +3596,18 @@ boost::signals2::connection database::add_post_reindex_handler(const reindex_han
    const abstract_plugin& plugin, int32_t group )
 {
    return connect_impl(_post_reindex_signal, func, plugin, group, "<-reindex");
+}
+
+boost::signals2::connection database::add_remain_bandwidth_handler(const bandwidth_handler_t& func,
+	const abstract_plugin& plugin, int32_t group)
+{
+	return connect_impl(_remain_bandwidth_signal, func, plugin, group, "->bandwidth");
+}
+
+boost::signals2::connection database::add_update_bandwidth_handler(const bandwidth_handler_t& func,
+	const abstract_plugin& plugin, int32_t group)
+{
+	return connect_impl(_update_bandwidth_signal, func, plugin, group, "<-bandwidth");
 }
 
 

@@ -34,6 +34,7 @@ add_library( gamebank_chain
 			include/gamebank/chain/contract/lua/ldebug.c
 			include/gamebank/chain/contract/lua/ldo.c
 			include/gamebank/chain/contract/lua/ldump.c
+			include/gamebank/chain/contract/lua/lextend.c
 			include/gamebank/chain/contract/lua/lfunc.c
 			include/gamebank/chain/contract/lua/lgc.c
 			include/gamebank/chain/contract/lua/linit.c

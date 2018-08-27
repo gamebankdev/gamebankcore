@@ -800,11 +800,15 @@ void luaV_execute (lua_State *L) {
   for (;;) {
     Instruction i;
     StkId ra;
-    vmfetch();
-	if( ++L->extend.current_opcode_execute_count >= L->extend.opcode_execute_limit && L->extend.opcode_execute_limit > 0)
+	if (++L->extend.current_opcode_execute_count >= L->extend.opcode_execute_limit && L->extend.opcode_execute_limit > 0)
+	{
+		//luaL_error("opcode execute limit : %d", L->extend.opcode_execute_limit);
+		set_extend_error(&(L->extend), LUA_EXTEND_OPCODE_ERR);
 		vmbreak;
+	}
 	if (L->extend.force_stop)
 		vmbreak;
+    vmfetch();
     vmdispatch (GET_OPCODE(i)) {
       vmcase(OP_MOVE) {
         setobjs2s(L, ra, RB(i));
@@ -1143,6 +1147,8 @@ void luaV_execute (lua_State *L) {
           Protect((void)0);  /* update 'base' */
         }
         else {  /* Lua function */
+		  if (L->extend.force_stop)
+			vmbreak;
           ci = L->ci;
           goto newframe;  /* restart luaV_execute over new Lua function */
         }
@@ -1175,6 +1181,8 @@ void luaV_execute (lua_State *L) {
           oci->callstatus |= CIST_TAIL;  /* function was tail called */
           ci = L->ci = oci;  /* remove new frame */
           lua_assert(L->top == oci->u.l.base + getproto(ofunc)->maxstacksize);
+		  if (L->extend.force_stop)
+			  vmbreak;
           goto newframe;  /* restart luaV_execute over new Lua function */
         }
         vmbreak;
@@ -1190,6 +1198,8 @@ void luaV_execute (lua_State *L) {
           if (b) L->top = ci->top;
           lua_assert(isLua(ci));
           lua_assert(GET_OPCODE(*((ci)->u.l.savedpc - 1)) == OP_CALL);
+		  if (L->extend.force_stop)
+			  vmbreak;
           goto newframe;  /* restart luaV_execute over new Lua function */
         }
       }
