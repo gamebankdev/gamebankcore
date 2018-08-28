@@ -397,7 +397,23 @@ namespace detail {
 
    void witness_plugin_impl::on_remain_bandwidth(chain::bandwidth_notification& note)
    {
-	   //note.remian_bandwidth = 0;
+	   const auto& props = _db.get_dynamic_global_properties();
+	   const chain::account_object& a = _db.get_account(note.account_name);
+
+	   if (props.total_vesting_shares.amount > 0)
+	   {
+		   auto band = _db.find< account_bandwidth_object, by_account_bandwidth_type >(boost::make_tuple(a.name, bandwidth_type::market));
+		   FC_ASSERT(band != nullptr, "account_bandwidth_object is null");
+		   fc::uint128 account_vshares(_db.get_effective_vesting_shares(a, GBS_SYMBOL).amount.value);
+		   fc::uint128 total_vshares(props.total_vesting_shares.amount.value);
+		   fc::uint128 account_average_bandwidth(band->average_bandwidth.value);
+		   fc::uint128 max_virtual_bandwidth(_db.get(reserve_ratio_id_type()).max_virtual_bandwidth);
+
+		   fc::uint128 allocate_bandwidth = ((account_vshares / total_vshares)*max_virtual_bandwidth) / GAMEBANK_BANDWIDTH_PRECISION;
+		   if (allocate_bandwidth > band->average_bandwidth.value) {
+			   note.remain_bandwidth = (int64_t)(((allocate_bandwidth - band->average_bandwidth.value) / GAMEBANK_BANDWIDTH_PRECISION).to_uint64());
+		   }
+	   }
    }
 
    void witness_plugin_impl::on_update_bandwidth(chain::bandwidth_notification& note)

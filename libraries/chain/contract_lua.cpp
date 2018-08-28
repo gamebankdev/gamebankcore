@@ -102,7 +102,10 @@ namespace gamebank { namespace chain {
 
 			void set_extend_arg(int memory_limit, int opcode_limit)
 			{
-				L->extend.memory_limit = memory_limit;
+				if (memory_limit > GAMEBANK_CONTRACT_MAX_MEMORY)
+					L->extend.memory_limit = GAMEBANK_CONTRACT_MAX_MEMORY;
+				else
+					L->extend.memory_limit = memory_limit;
 				L->extend.opcode_execute_limit = opcode_limit;
 			}
 

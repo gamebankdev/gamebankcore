@@ -3,6 +3,9 @@
 #include <gamebank/chain/contract/contract_interface.hpp>
 #include <gamebank/chain/database.hpp>
 
+// 50M
+#define GAMEBANK_CONTRACT_MAX_MEMORY 1024*50
+
 namespace gamebank { namespace chain {
 
 	namespace detail { class contract_lua_impl; }

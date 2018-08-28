@@ -625,7 +625,7 @@ void comment_evaluator::do_apply( const comment_operation& o )
             from_string( com.parent_permlink, o.parent_permlink );
             from_string( com.category, o.parent_permlink );
             com.root_comment = com.id;
-            com.cashout_time =   _db.head_block_time() + GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD;
+            //com.cashout_time =   _db.head_block_time() + GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD;
 
          }
          else
@@ -1306,39 +1306,23 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
          if( curation_reward_eligible )
          {
-            if( comment.created < fc::time_point_sec(GAMEBANK_HARDFORK_0_6_REVERSE_AUCTION_TIME) ) {
-               u512 rshares3(rshares);
-               u256 total2( comment.abs_rshares.value );
-
-               rshares3 = rshares3 * rshares3 * rshares3;
-
-               total2 *= total2;
-               cv.weight = static_cast<uint64_t>( rshares3 / total2 );
-            } else {// cv.weight = W(R_1) - W(R_0)
-           //    const uint128_t two_s = 2 * util::get_content_constant_s();
-
-                  const auto& reward_fund = _db.get_reward_fund( comment );
-                  auto curve = reward_fund.curation_reward_curve;
-                  uint64_t old_weight = util::evaluate_reward_curve( old_vote_rshares.value, curve, reward_fund.content_constant ).to_uint64();
-                  uint64_t new_weight = util::evaluate_reward_curve( comment.vote_rshares.value, curve, reward_fund.content_constant ).to_uint64();
-                  cv.weight = new_weight - old_weight;
-               
-
-               
-            }
+			 // cv.weight = W(R_1) - W(R_0)
+			 // const uint128_t two_s = 2 * util::get_content_constant_s();
+			const auto& reward_fund = _db.get_reward_fund(comment);
+			auto curve = reward_fund.curation_reward_curve;
+			uint64_t old_weight = util::evaluate_reward_curve(old_vote_rshares.value, curve, reward_fund.content_constant).to_uint64();
+			uint64_t new_weight = util::evaluate_reward_curve(comment.vote_rshares.value, curve, reward_fund.content_constant).to_uint64();
+			cv.weight = new_weight - old_weight;
 
             max_vote_weight = cv.weight;
 
-            if( _db.head_block_time() > fc::time_point_sec(GAMEBANK_HARDFORK_0_6_REVERSE_AUCTION_TIME) )  /// start enforcing this prior to the hardfork
-            {
-               /// discount weight by time
-               uint128_t w(max_vote_weight);
-               uint64_t delta_t = std::min( uint64_t((cv.last_update - comment.created).to_seconds()), uint64_t(GAMEBANK_REVERSE_AUCTION_WINDOW_SECONDS) );
+			/// discount weight by time
+			uint128_t w(max_vote_weight);
+			uint64_t delta_t = std::min(uint64_t((cv.last_update - comment.created).to_seconds()), uint64_t(GAMEBANK_REVERSE_AUCTION_WINDOW_SECONDS));
 
-               w *= delta_t;
-               w /= GAMEBANK_REVERSE_AUCTION_WINDOW_SECONDS;
-               cv.weight = w.to_uint64();
-            }
+			w *= delta_t;
+			w /= GAMEBANK_REVERSE_AUCTION_WINDOW_SECONDS;
+			cv.weight = w.to_uint64();
          }
          else
          {
@@ -2452,9 +2436,15 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		// check bandwith
 		bandwidth_notification note(op.creator);
 		_db.notify_remain_bandwidth(note);
-		FC_ASSERT(note.remain_bandwidth > 0, "bandwidth limit exceeded");
+		if (note.remain_bandwidth != -1) {
+			FC_ASSERT(note.remain_bandwidth > 0, "bandwidth limit exceeded");
+		}
+		else {
+			// witness_plugin not loaded
+			note.remain_bandwidth = 0;
+		}
 
-		int memory_limit = note.remain_bandwidth/1024; // (1024 * 50); // 50M
+		int memory_limit = note.remain_bandwidth/10;
 		int opcode_limit = note.remain_bandwidth;
 
 		contract_lua contract(op.creator);
@@ -2544,9 +2534,15 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 		// check bandwith
 		bandwidth_notification note(op.caller);
 		_db.notify_remain_bandwidth(note);
-		FC_ASSERT(note.remain_bandwidth > 0, "bandwidth limit exceeded");
+		if (note.remain_bandwidth != -1) {
+			FC_ASSERT(note.remain_bandwidth > 0, "bandwidth limit exceeded");
+		}
+		else {
+			// witness_plugin not loaded
+			note.remain_bandwidth = 0;
+		}
 
-		int memory_limit = note.remain_bandwidth / 1024; // (1024 * 50); // 50M
+		int memory_limit = note.remain_bandwidth / 10;
 		int opcode_limit = note.remain_bandwidth;
 
 		contract_lua contract(op.contract_name);
