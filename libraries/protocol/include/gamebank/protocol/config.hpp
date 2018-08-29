@@ -14,21 +14,22 @@
 
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1451606400))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1451606400))
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60) /// 1 hr
+#define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60*24*7) /// 7 days
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD (GAMEBANK_CASHOUT_WINDOW_SECONDS)
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*3) /// 3 days
 #define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24) /// 1 day
 #define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::minutes(5))
 
 
-#define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          (int64_t( 150000 ) * int64_t( 1000 ))
+#define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          (int64_t( 10000 ) * int64_t( 1000 ))			//percision 10^3
 
 #define GAMEBANK_OWNER_AUTH_RECOVERY_PERIOD                  fc::seconds(60)
 #define GAMEBANK_ACCOUNT_RECOVERY_REQUEST_EXPIRATION_PERIOD  fc::seconds(12)
 #define GAMEBANK_OWNER_UPDATE_LIMIT                          fc::seconds(0)
 #define GAMEBANK_OWNER_AUTH_HISTORY_TRACKING_START_BLOCK_NUM 1
 
-#define GAMEBANK_INIT_SUPPLY                     (int64_t( 250 ) * int64_t( 1000000 ) * int64_t( 1000 ))
+#define GAMEBANK_INIT_SUPPLY                     (int64_t( 5000 ) * int64_t( 1000000 ) * int64_t( 1000 ))//5 billion, percision 10^3
+#define GAMEBANK_INIT_VESTING_SUPPLY_PERCENT	 (10 * GAMEBANK_1_PERCENT) 
 
 /// Allows to limit number of total produced blocks.
 #define TESTNET_BLOCK_LIMIT                   (3000000)

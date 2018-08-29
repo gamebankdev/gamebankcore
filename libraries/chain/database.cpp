@@ -1295,22 +1295,16 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
 	  //POWER UP时to_reward_balance为false
 	  //to_reward_balance默认为false
 
-	  //获取GBC to GBS 汇率
-	  //对作者post奖励，如果是GBC_HARDFORK_0_17__659,则取get_reward_vesting_share_price
       price vesting_share_price = to_reward_balance ? cprops.get_reward_vesting_share_price() : cprops.get_vesting_share_price();
-
 	  // Calculate new vesting from provided liquid using share price.
-      //经过汇率计算后得出可获得的VEST
       asset new_vesting = calculate_new_vesting( vesting_share_price );
 
 	  // Add new vesting to owner's balance.
-      //新增GBS到账户存款
       if( to_reward_balance )
          adjust_reward_balance( to_account, liquid, new_vesting );
       else
          adjust_balance( to_account, new_vesting );
       // Update global vesting pool numbers.
-      //更新全局gamebank和vest状态
       modify( cprops, [&]( dynamic_global_property_object& props )
       {
          if( to_reward_balance )
@@ -2792,7 +2786,7 @@ void database::init_genesis( uint64_t init_supply )
       create< witness_schedule_object >( [&]( witness_schedule_object& wso )
       {
          wso.current_shuffled_witnesses[0] = GAMEBANK_INIT_MINER_NAME;
-      } );
+      } );	  
    }
    FC_CAPTURE_AND_RETHROW()
 }
@@ -2988,12 +2982,17 @@ void database::_apply_block( const signed_block& next_block )
    _current_trx_in_block = 0;
    _current_virtual_op   = 0;
 
-   //???
    if( BOOST_UNLIKELY( next_block_num == 1 ) )
    {
+	  
       //
       apply_pre_genesis_patches();
-      
+	  uint64_t init_to_vest = (GAMEBANK_INIT_SUPPLY * GAMEBANK_INIT_VESTING_SUPPLY_PERCENT) / GAMEBANK_100_PERCENT;
+	  ilog("start convert ${init} GBC to VEST for initminer", ("init", init_to_vest / 1000000));
+	  const auto& acc = get_account(GAMEBANK_INIT_MINER_NAME);
+	  adjust_balance(acc, -asset(init_to_vest, GBC_SYMBOL));
+	  create_vesting(acc, asset(init_to_vest, GBC_SYMBOL));
+	  
       // For every existing before the head_block_time (genesis time), apply the hardfork
       // This allows the test net to launch with past hardforks and apply the next harfork when running
 
