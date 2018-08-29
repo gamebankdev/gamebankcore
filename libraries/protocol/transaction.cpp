@@ -191,8 +191,8 @@ set<public_key_type> signed_transaction::get_required_signatures(
 }
 
 set<public_key_type> signed_transaction::minimize_required_signatures(
-   const chain_id_type& chain_id,							//区块链id
-   const flat_set< public_key_type >& available_keys,		//钱包中存在的权限公钥许可
+   const chain_id_type& chain_id,							
+   const flat_set< public_key_type >& available_keys,		
 
    //typedef std::function<authority(const string&)> authority_getter;
    const authority_getter& get_active,

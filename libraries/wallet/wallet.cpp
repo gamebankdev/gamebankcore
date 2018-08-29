@@ -594,7 +594,6 @@ public:
 
 //3 建立<账户名，api_account_object>映射表
 
-	  //配置approving_account_lut
       flat_map< string, condenser_api::api_account_object > approving_account_lut;
       size_t i = 0;
       for( const optional< condenser_api::api_account_object >& approving_acct : approving_account_objects )
@@ -609,7 +608,7 @@ public:
          approving_account_lut[ approving_acct->name ] =  *approving_acct;
          i++;
       }
-	  //get_account_from_lut：定义了根据账户名查询对应的api_account_object
+	  //look up api_account_object by account_name
       auto get_account_from_lut = [&]( const std::string& name ) -> const condenser_api::api_account_object&
       {
          auto it = approving_account_lut.find( name );
@@ -677,14 +676,10 @@ public:
             approving_key_set.insert( k.first );
          }
       }
-
-	  //获取当前区块链属性
       auto dyn_props = _remote_api->get_dynamic_global_properties();
 	  //设置交易的reference_block(for tapos)
       tx.set_reference_block( dyn_props.head_block_id );
-	  //设置交易的过期时间
       tx.set_expiration( dyn_props.time + fc::seconds(_tx_expiration_seconds) );
-	  //先清除当前交易的所有签名
       tx.signatures.clear();
 
 //5 权限所需的公钥是否已在钱包
@@ -713,12 +708,12 @@ public:
          gamebank_chain_id,
          available_keys,//钱包存在的交易必需的公钥许可
          [&]( const string& account_name ) -> const authority&
-         { return (get_account_from_lut( account_name ).active); },		//账户的active权限
+         { return (get_account_from_lut( account_name ).active); },		//get account's active authority based on the account name
          [&]( const string& account_name ) -> const authority&
-         { return (get_account_from_lut( account_name ).owner); },		//账户的owner权限
+         { return (get_account_from_lut( account_name ).owner); },		//get account's owner authority based on the account name
          [&]( const string& account_name ) -> const authority&
-         { return (get_account_from_lut( account_name ).posting); },	//账户的post权限
-         GAMEBANK_MAX_SIG_CHECK_DEPTH									//最大深度
+         { return (get_account_from_lut( account_name ).posting); },	//get account's posting authority based on the account name
+         GAMEBANK_MAX_SIG_CHECK_DEPTH									
          );
 
 //7 使用有效的公钥-获取对应的私钥-对交易签名
@@ -1279,14 +1274,10 @@ condenser_api::legacy_signed_transaction wallet_api::create_account_with_keys(
    //创建账户费用
    //op.fee = my->_remote_api->get_chain_properties().account_creation_fee * asset( GAMEBANK_CREATE_ACCOUNT_WITH_GBC_MODIFIER, GBC_SYMBOL );
    op.fee = asset(GAMEBANK_MIN_ACCOUNT_CREATION_FEE, GBC_SYMBOL);
-   //创建新账户也是一个交易
    signed_transaction tx;
    tx.operations.push_back(op);
-   //验证交易（验证交易中所有的操作，本例为account_create_operation）
    tx.validate();
 
-   //交易签名，并发送到远端节点
-   //注意wallet并不对操作执行do_apply
    return my->sign_transaction( tx, broadcast );
 } FC_CAPTURE_AND_RETHROW( (creator)(new_account_name)(json_meta)(owner)(active)(memo)(broadcast) ) }
 
@@ -1701,7 +1692,7 @@ condenser_api::legacy_signed_transaction wallet_api::delegate_vesting_shares(
 }
 
 /**
- *  This method will genrate new owner, active, and memo keys for the new account which
+ *  This method will generate new owner, active, and memo keys for the new account which
  *  will be controlable by this wallet.
  */
 condenser_api::legacy_signed_transaction wallet_api::create_account(
@@ -1716,7 +1707,7 @@ condenser_api::legacy_signed_transaction wallet_api::create_account(
    auto active = suggest_brain_key();
    auto posting = suggest_brain_key();
    auto memo = suggest_brain_key();
-   //将私钥导入钱包，以后账户使用这些私钥用来签名交易
+   
    import_key( owner.wif_priv_key );	
    import_key( active.wif_priv_key );	
    import_key( posting.wif_priv_key );	
