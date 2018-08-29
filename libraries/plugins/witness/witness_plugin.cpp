@@ -442,7 +442,24 @@ namespace detail {
          fc::uint128 total_vshares( props.total_vesting_shares.amount.value );
          fc::uint128 account_average_bandwidth( band->average_bandwidth.value );
          fc::uint128 max_virtual_bandwidth( _db.get( reserve_ratio_id_type() ).max_virtual_bandwidth );
-
+#ifdef IS_TEST_NET
+		 if (type == forum) 
+		 {
+			 ilog("-----------------FORUM BANDWIDTH DEBUG --------------------");
+			 ilog("account: ${name}", ("name", a.name));
+			 auto max_bandwidth_bytes = max_virtual_bandwidth / GAMEBANK_BANDWIDTH_PRECISION;
+			 ilog("  max bandwidth bytes:			${mvb} bytes", ("mvb", max_bandwidth_bytes));
+			 auto allocate_bandwidth = (max_bandwidth_bytes * account_vshares) / total_vshares;
+			 ilog("  allocate bandwidth bytes:		${ab}  bytes", ("ab", allocate_bandwidth));
+			 auto used_bandwidth = account_average_bandwidth / GAMEBANK_BANDWIDTH_PRECISION;
+			 ilog("  used bandwidth bytes:			${ub}  bytes", ("ub", used_bandwidth));
+			 auto remain_bandwidth = allocate_bandwidth - used_bandwidth;
+			 ilog("**  remaining bandwidth			${rb}  bytes", ("rb", remain_bandwidth));
+			 ilog("**  remaining bandwidth_percent  ${p}%", ("p", allocate_bandwidth <= 0 ? 0 : (remain_bandwidth * GAMEBANK_1_PERCENT) / allocate_bandwidth));
+		
+			 ilog("----------------- DEBUG END --------------------------");
+		 }
+#endif
          has_bandwidth = ( account_vshares * max_virtual_bandwidth ) > ( account_average_bandwidth * total_vshares );
 
          if( _db.is_producing() )
