@@ -52,6 +52,7 @@ namespace gamebank { namespace chain {
 				sys_functions.insert("tonumber");
 				sys_functions.insert("tostring");
 				sys_functions.insert("type");
+				sys_functions.insert("isinteger");
 
 				// tablib
 				sys_functions.insert("table");
