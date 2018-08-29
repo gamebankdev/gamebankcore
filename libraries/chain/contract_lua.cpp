@@ -186,7 +186,7 @@ namespace gamebank { namespace chain {
 						}
 						break;
 					}
-					case OP_SETTABUP:
+					case OP_SETTABUP: /*	A B C	UpValue[A][RK(B)] := RK(C)			*/
 					{
 						if (proto->upvalues[a].name != nullptr) {
 							const char* upvalue_name = getstr(proto->upvalues[a].name);
@@ -202,6 +202,7 @@ namespace gamebank { namespace chain {
 										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
+									// todo: how to determine RK(C) is a function?
 									// check abi
 									if ( !is_abi(bname)) {
 										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
@@ -236,6 +237,33 @@ namespace gamebank { namespace chain {
 				return true;
 			}
 
+			void show_extend_error() {
+				switch (L->extend.error_no)
+				{
+				case LUA_EXTEND_THROW:
+					elog("luaL_loadbuffer Error: ${err}", ("err", "LUA_EXTEND_THROW"));
+					break;
+				case LUA_EXTEND_MEM_ERR:
+				{
+					global_State * g = G(L);
+					int mem_count = cast_int(gettotalbytes(g) >> 10) + (cast_int(gettotalbytes(g) & 0x3ff) / 1024);
+					elog("luaL_loadbuffer Error: ${err} mem:${mem} memlimit:${memlimit}",
+						("err", "LUA_EXTEND_MEM_ERR")
+						("mem", mem_count)
+						("memlimit", L->extend.memory_limit));
+				}
+					break;
+				case LUA_EXTEND_OPCODE_ERR:
+					elog("luaL_loadbuffer Error: ${err} opcount:${opcount} oplimit:${oplimit}",
+						("err", "LUA_EXTEND_OPCODE_ERR")
+						("opcount",L->extend.current_opcode_execute_count)
+						("oplimit", L->extend.opcode_execute_limit));
+					break;
+				default:
+					break;
+				}
+			}
+
 			bool deploy(const std::string& data)
 			{
 				//int stack_pos = lua_gettop(L);
@@ -245,25 +273,35 @@ namespace gamebank { namespace chain {
 				int ret = luaL_loadbuffer(L, data.c_str(), data_size, contract_name.c_str());
 				if (ret != 0)
 				{
-					const char* str = lua_tostring(L, -1);
-					if (str != nullptr)
-					{
-						elog("luaL_loadbuffer Error: ${err}", ("err", str));
-						lua_pop(L, 1);
+					if (L->extend.error_no != LUA_EXTEND_OK) {
+						show_extend_error();
+						return false;
+					}
+					else {
+						const char* str = lua_tostring(L, -1);
+						if (str != nullptr)
+						{
+							elog("luaL_loadbuffer Error: ${err}", ("err", str));
+							lua_pop(L, 1);
+							return false;
+						}
 					}
 					//FC_ASSERT(ret == 0, "contract compile error");
+					elog("luaL_loadbuffer Error: ${err}", ("err", ""));
 					return false;
 				}
 				//stack_pos = lua_gettop(L);
-				int type = lua_type(L, -1);
+				//int type = lua_type(L, -1);
 				//printf("deploy 2 stack_pos=%d type=%d\n", stack_pos, type);
 				LClosure* lc = clLvalue(L->top - 1);
 				if (lc == nullptr || lc->p == nullptr)
 				{
+					elog("clLvalue Error: lc == nullptr || lc->p == nullptr" );
 					return false;
 				}
 				if (!compile_check(lc->p, nullptr))
 				{
+					elog("compile_check Error");
 					return false;
 				}
 
@@ -271,20 +309,8 @@ namespace gamebank { namespace chain {
 				if (ret != 0)
 				{
 					if (L->extend.error_no != LUA_EXTEND_OK) {
-						switch (L->extend.error_no)
-						{
-						case LUA_EXTEND_THROW:
-							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_THROW"));
-							break;
-						case LUA_EXTEND_MEM_ERR:
-							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_MEM_ERR"));
-							break;
-						case LUA_EXTEND_OPCODE_ERR:
-							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_OPCODE_ERR"));
-							break;
-						default:
-							break;
-						}
+						show_extend_error();
+						return false;
 					}
 					else {
 						const char* str = lua_tostring(L, -1);
@@ -296,6 +322,8 @@ namespace gamebank { namespace chain {
 							return false;
 						}
 					}
+					elog("lua_pcall Error: ${err}", ("err", ""));
+					return false;
 					//FC_ASSERT(ret == 0, "contract compile error");
 				}
 				return true;
