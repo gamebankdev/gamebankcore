@@ -409,9 +409,9 @@ namespace detail {
 		   fc::uint128 account_average_bandwidth(band->average_bandwidth.value);
 		   fc::uint128 max_virtual_bandwidth(_db.get(reserve_ratio_id_type()).max_virtual_bandwidth);
 
-		   fc::uint128 allocate_bandwidth = ((account_vshares / total_vshares)*max_virtual_bandwidth) / GAMEBANK_BANDWIDTH_PRECISION;
+		   fc::uint128 allocate_bandwidth = (((account_vshares*max_virtual_bandwidth) / total_vshares));
 		   if (allocate_bandwidth > band->average_bandwidth.value) {
-			   note.remain_bandwidth = (int64_t)(((allocate_bandwidth - band->average_bandwidth.value) / GAMEBANK_BANDWIDTH_PRECISION).to_uint64());
+			   note.remain_bandwidth = (int64_t)(((allocate_bandwidth - band->average_bandwidth.value) / GAMEBANK_BANDWIDTH_PRECISION).to_uint64()); // bytes
 		   }
 	   }
    }
