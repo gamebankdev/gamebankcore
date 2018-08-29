@@ -402,8 +402,16 @@ namespace detail {
 
 	   if (props.total_vesting_shares.amount > 0)
 	   {
-		   auto band = _db.find< account_bandwidth_object, by_account_bandwidth_type >(boost::make_tuple(a.name, bandwidth_type::market));
-		   FC_ASSERT(band != nullptr, "account_bandwidth_object is null");
+		   bandwidth_type type = bandwidth_type::market;
+		   auto band = _db.find< account_bandwidth_object, by_account_bandwidth_type >(boost::make_tuple(a.name, type));
+		   if (band == nullptr)
+		   {
+			   band = &_db.create< account_bandwidth_object >([&](account_bandwidth_object& b)
+			   {
+				   b.account = a.name;
+				   b.type = type;
+			   });
+		   }
 		   fc::uint128 account_vshares(_db.get_effective_vesting_shares(a, GBS_SYMBOL).amount.value);
 		   fc::uint128 total_vshares(props.total_vesting_shares.amount.value);
 		   fc::uint128 account_average_bandwidth(band->average_bandwidth.value);
