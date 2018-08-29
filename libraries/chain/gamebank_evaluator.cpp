@@ -2542,7 +2542,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 			note.remain_bandwidth = 0;
 		}
 
-		int memory_limit = note.remain_bandwidth / 10;
+		int memory_limit = 0; /* note.remain_bandwidth / 10;*/
 		int opcode_limit = note.remain_bandwidth;
 
 		contract_lua contract(op.contract_name);

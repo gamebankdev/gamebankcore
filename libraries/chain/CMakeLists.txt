@@ -23,6 +23,7 @@ add_library( gamebank_chain
 			 
 			contract_lua.cpp
 			contract_lualib.cpp
+			contract_chain.cpp
 			include/gamebank/chain/contract/lua/lapi.c
 			include/gamebank/chain/contract/lua/lauxlib.c
 			include/gamebank/chain/contract/lua/lbaselib.c

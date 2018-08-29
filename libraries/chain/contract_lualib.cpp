@@ -41,13 +41,19 @@ static int contract_get_data_by_username(lua_State *L, const char* user_name) {
 
 	int check_top = lua_gettop(L);
 	lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
-	FC_ASSERT(lua_istable(L, -1), "_contract_modified_data must be a table");
+	if (!lua_istable(L, -1)) {
+		luaL_error(L, "_contract_modified_data must be a table");
+		return 0;
+	}
 	lua_pushstring(L, user_name);
 	lua_pushvalue(L, -3); // push datatable to top
 	lua_rawset(L, -3); // _contract_modified_data[contract_name] = datatable
 	lua_pop(L, 1);
 	int check_top2 = lua_gettop(L);
-	FC_ASSERT(check_top == check_top2, "lua stack error");
+	if (!(check_top == check_top2)) {
+		luaL_error(L, "lua stack error");
+		return 0;
+	}
 	return ret;
 }
 
@@ -101,7 +107,10 @@ static int contract_transfer(lua_State *L) {
 	account_name_type to = to_account;
 	asset amount(num, GBC_SYMBOL);
 	chain::database* db = (chain::database*)(L->extend.pointer);
-	FC_ASSERT(db->get_balance(from, amount.symbol) >= amount, "Account does not have sufficient funds for transfer.");
+	if (!(db->get_balance(from, amount.symbol) >= amount)) {
+		luaL_error(L, "Account does not have sufficient funds for transfer");
+		return 0;
+	}
 	db->adjust_balance(from, -amount);
 	db->adjust_balance(to, amount);
 	return 0;

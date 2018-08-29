@@ -2,6 +2,7 @@
 #include <fc/log/logger.hpp>
 #include <gamebank/chain/database.hpp>
 #include <gamebank/chain/contract/contract_lualib.hpp>
+#include <gamebank/chain/contract/contract_chain.hpp>
 #include <gamebank/chain/contract/contract_object.hpp>
 #include <gamebank/chain/contract/contract_user_object.hpp>
 
@@ -28,9 +29,11 @@ namespace gamebank { namespace chain {
 				L = luaL_newstate();
 				luaL_openlibs(L);
 				luaL_openlibs_contract(L);
+				luaL_openlibs_chain(L);
 
 				// contract
 				sys_functions.insert("contract");
+				sys_functions.insert("chain");
 
 				// baselib
 				sys_functions.insert("assert");
