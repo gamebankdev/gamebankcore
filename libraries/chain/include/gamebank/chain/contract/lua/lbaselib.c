@@ -205,6 +205,12 @@ static int luaB_type (lua_State *L) {
   return 1;
 }
 
+static int luaB_isinteger(lua_State *L) {
+	luaL_checkany(L, 1);
+	lua_pushboolean(L, lua_isinteger(L, 1));
+	return 1;
+}
+
 
 static int pairsmeta (lua_State *L, const char *method, int iszero,
                       lua_CFunction iter) {
@@ -475,6 +481,7 @@ static const luaL_Reg base_funcs[] = {
   {"tonumber", luaB_tonumber},
   {"tostring", luaB_tostring},
   {"type", luaB_type},
+  {"isinteger", luaB_isinteger},
   //{"xpcall", luaB_xpcall},
   /* placeholders */
   {"_G", NULL},
