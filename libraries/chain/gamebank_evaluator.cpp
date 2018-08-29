@@ -930,12 +930,16 @@ void transfer_to_vesting_evaluator::do_apply( const transfer_to_vesting_operatio
 
 void withdraw_vesting_evaluator::do_apply( const withdraw_vesting_operation& o )
 {
+   FC_ASSERT(o.vesting_shares > asset(0, GBS_SYMBOL), "withdraw vest must be greater than 0.");
    const auto& account = _db.get_account( o.account );
 
    FC_ASSERT( account.vesting_shares >= asset( 0, GBS_SYMBOL ), "Account does not have sufficient Gamebank Power for withdraw." );
    FC_ASSERT( account.vesting_shares - account.delegated_vesting_shares >= o.vesting_shares, "Account does not have sufficient Gamebank Power for withdraw." );
 
    FC_TODO( "Remove this entire block after HF 20" )
+  /**
+   * in gamebank, the new account created by initminer with delegation vest shares, don't need check min_vests anymore
+   *
    if( !_db.has_hardfork( GAMEBANK_HARDFORK_0_1 ) && !account.mined )
    {
       const auto& props = _db.get_dynamic_global_properties();
@@ -947,7 +951,7 @@ void withdraw_vesting_evaluator::do_apply( const withdraw_vesting_operation& o )
       FC_ASSERT( account.vesting_shares > min_vests || ( o.vesting_shares.amount == 0 ),
                  "Account registered by another account requires 10x account creation fee worth of Gamebank Power before it can be powered down." );
    }
-
+   */
    if( o.vesting_shares.amount == 0 )
    {
       FC_ASSERT( account.vesting_withdraw_rate.amount  != 0, "This operation would not change the vesting withdraw rate." );
@@ -1197,7 +1201,7 @@ void vote_evaluator::do_apply( const vote_operation& o )
    FC_ASSERT( used_power <= current_power, "Account does not have enough power to vote." );
 
    int64_t abs_rshares    = ((uint128_t( _db.get_effective_vesting_shares( voter, GBS_SYMBOL ).amount.value ) * used_power) / (GAMEBANK_100_PERCENT)).to_uint64();
-   ilog("debug vote: abs_rshares == ${rshares}, used_power == ${power}, vest_shares == ${vs}", ("rshares", abs_rshares)("power", used_power)("vs", voter.vesting_shares.amount.value));
+   ilog("abs_rshares == ${rshares}, used_power == ${power}", ("rshares", abs_rshares)("power", used_power));
 
    if( _db.has_hardfork( GAMEBANK_HARDFORK_0_1 ) )
    {

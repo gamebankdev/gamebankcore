@@ -44,7 +44,7 @@ namespace gamebank { namespace chain {
          time_point_sec    last_account_recovery;
          uint32_t          comment_count = 0;
          uint32_t          lifetime_vote_count = 0;
-         uint32_t          post_count = 0;
+         uint32_t          post_count = 0;		//post and comment
 
          bool              can_vote = true;
          uint16_t          voting_power = GAMEBANK_100_PERCENT;   ///< current voting power of this account, it falls after every vote

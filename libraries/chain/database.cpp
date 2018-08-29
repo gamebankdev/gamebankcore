@@ -2988,7 +2988,7 @@ void database::_apply_block( const signed_block& next_block )
       //
       apply_pre_genesis_patches();
 	  uint64_t init_to_vest = (GAMEBANK_INIT_SUPPLY * GAMEBANK_INIT_VESTING_SUPPLY_PERCENT) / GAMEBANK_100_PERCENT;
-	  ilog("start convert ${init} GBC to VEST for initminer", ("init", init_to_vest / 1000000));
+	  ilog("start convert ${init} GBC to VEST for initminer", ("init", init_to_vest / 1000));
 	  const auto& acc = get_account(GAMEBANK_INIT_MINER_NAME);
 	  adjust_balance(acc, -asset(init_to_vest, GBC_SYMBOL));
 	  create_vesting(acc, asset(init_to_vest, GBC_SYMBOL));
