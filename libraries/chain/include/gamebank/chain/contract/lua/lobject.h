@@ -544,6 +544,14 @@ LUAI_FUNC const char *luaO_pushvfstring (lua_State *L, const char *fmt,
 LUAI_FUNC const char *luaO_pushfstring (lua_State *L, const char *fmt, ...);
 LUAI_FUNC void luaO_chunkid (char *out, const char *source, size_t len);
 
+LUAI_FUNC const char *l_str2int(const char *s, lua_Integer *result);
+LUAI_FUNC const char *l_str2d(const char *s, lua_Number *result);
+LUAI_FUNC int isneg(const char **s);
+
+/* maximum length of the conversion of a number to a string */
+#define MAXNUMBER2STR	50
+#define MAXBY10		cast(lua_Unsigned, LUA_MAXINTEGER / 10)
+#define MAXLASTD	cast_int(LUA_MAXINTEGER % 10)
 
 #endif
 

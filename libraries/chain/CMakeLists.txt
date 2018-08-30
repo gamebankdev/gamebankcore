@@ -58,7 +58,6 @@ add_library( gamebank_chain
 			include/gamebank/chain/contract/lua/lutf8lib.c
 			include/gamebank/chain/contract/lua/lvm.c
 			include/gamebank/chain/contract/lua/lzio.c
-			include/gamebank/chain/contract/lua/fpconv.c
 			include/gamebank/chain/contract/lua/lua_cjson.c
 			include/gamebank/chain/contract/lua/strbuf.c
 

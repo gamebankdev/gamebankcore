@@ -166,7 +166,7 @@ int luaO_hexavalue (int c) {
 }
 
 
-static int isneg (const char **s) {
+int isneg (const char **s) {
   if (**s == '-') { (*s)++; return 1; }
   else if (**s == '+') (*s)++;
   return 0;
@@ -271,7 +271,7 @@ static const char *l_str2dloc (const char *s, lua_Number *result, int mode) {
 ** to a buffer (because 's' is read-only), changes the dot to the
 ** current locale radix mark, and tries to convert again.
 */
-static const char *l_str2d (const char *s, lua_Number *result) {
+const char *l_str2d (const char *s, lua_Number *result) {
   const char *endptr;
   const char *pmode = strpbrk(s, ".xXnN");
   int mode = pmode ? ltolower(cast_uchar(*pmode)) : 0;
@@ -293,10 +293,9 @@ static const char *l_str2d (const char *s, lua_Number *result) {
 }
 
 
-#define MAXBY10		cast(lua_Unsigned, LUA_MAXINTEGER / 10)
-#define MAXLASTD	cast_int(LUA_MAXINTEGER % 10)
 
-static const char *l_str2int (const char *s, lua_Integer *result) {
+
+const char *l_str2int (const char *s, lua_Integer *result) {
   lua_Unsigned a = 0;
   int empty = 1;
   int neg;
@@ -361,8 +360,7 @@ int luaO_utf8esc (char *buff, unsigned long x) {
 }
 
 
-/* maximum length of the conversion of a number to a string */
-#define MAXNUMBER2STR	50
+
 
 
 /*
