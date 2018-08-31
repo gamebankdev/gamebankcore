@@ -24,6 +24,7 @@ add_library( gamebank_chain
 			 
 			contract_lua.cpp
 			contract_lualib.cpp
+			contract_chain.cpp
 			include/gamebank/chain/contract/lua/lapi.c
 			include/gamebank/chain/contract/lua/lauxlib.c
 			include/gamebank/chain/contract/lua/lbaselib.c
@@ -35,6 +36,7 @@ add_library( gamebank_chain
 			include/gamebank/chain/contract/lua/ldebug.c
 			include/gamebank/chain/contract/lua/ldo.c
 			include/gamebank/chain/contract/lua/ldump.c
+			include/gamebank/chain/contract/lua/lextend.c
 			include/gamebank/chain/contract/lua/lfunc.c
 			include/gamebank/chain/contract/lua/lgc.c
 			include/gamebank/chain/contract/lua/linit.c
@@ -57,7 +59,6 @@ add_library( gamebank_chain
 			include/gamebank/chain/contract/lua/lutf8lib.c
 			include/gamebank/chain/contract/lua/lvm.c
 			include/gamebank/chain/contract/lua/lzio.c
-			include/gamebank/chain/contract/lua/fpconv.c
 			include/gamebank/chain/contract/lua/lua_cjson.c
 			include/gamebank/chain/contract/lua/strbuf.c
 

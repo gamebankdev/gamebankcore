@@ -11,6 +11,7 @@
 #include <gamebank/chain/node_property_object.hpp>
 #include <gamebank/chain/operation_notification.hpp>
 #include <gamebank/chain/transaction_notification.hpp>
+#include <gamebank/chain/bandwidth_notification.hpp>
 
 #include <gamebank/chain/util/advanced_benchmark_dumper.hpp>
 #include <gamebank/chain/util/signal.hpp>
@@ -262,12 +263,15 @@ namespace gamebank { namespace chain {
          void notify_irreversible_block( uint32_t block_num );
          void notify_pre_apply_transaction( const transaction_notification& note );
          void notify_post_apply_transaction( const transaction_notification& note );
+		 void notify_remain_bandwidth( bandwidth_notification& note );
+		 void notify_update_bandwidth( bandwidth_notification& note );
 
          using apply_operation_handler_t = std::function< void(const operation_notification&) >;
          using apply_transaction_handler_t = std::function< void(const transaction_notification&) >;
          using apply_block_handler_t = std::function< void(const block_notification&) >;
          using irreversible_block_handler_t = std::function< void(uint32_t) >;
          using reindex_handler_t = std::function< void(const reindex_notification&) >;
+		 using bandwidth_handler_t = std::function< void(bandwidth_notification&) >;
 
 
       private:
@@ -291,6 +295,8 @@ namespace gamebank { namespace chain {
          boost::signals2::connection add_irreversible_block_handler    ( const irreversible_block_handler_t&   func, const abstract_plugin& plugin, int32_t group = -1 );
          boost::signals2::connection add_pre_reindex_handler           ( const reindex_handler_t&              func, const abstract_plugin& plugin, int32_t group = -1 );
          boost::signals2::connection add_post_reindex_handler          ( const reindex_handler_t&              func, const abstract_plugin& plugin, int32_t group = -1 );
+		 boost::signals2::connection add_remain_bandwidth_handler      ( const bandwidth_handler_t&            func, const abstract_plugin& plugin, int32_t group = -1);
+		 boost::signals2::connection add_update_bandwidth_handler      ( const bandwidth_handler_t&            func, const abstract_plugin& plugin, int32_t group = -1);
 
          //////////////////// db_witness_schedule.cpp ////////////////////
 
@@ -605,6 +611,9 @@ namespace gamebank { namespace chain {
           * Emitted when reindexing finishes
           */
          fc::signal<void(const reindex_notification&)>         _post_reindex_signal;
+
+		 fc::signal<void(bandwidth_notification&)>             _remain_bandwidth_signal;
+		 fc::signal<void(bandwidth_notification&)>             _update_bandwidth_signal;
 
          /**
           *  Emitted After a block has been applied and committed.  The callback

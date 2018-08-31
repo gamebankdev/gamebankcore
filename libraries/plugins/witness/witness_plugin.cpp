@@ -86,6 +86,8 @@ namespace detail {
       void on_pre_apply_transaction( const chain::transaction_notification& trx );
       void on_pre_apply_operation( const chain::operation_notification& note );
       void on_post_apply_operation( const chain::operation_notification& note );
+	  void on_remain_bandwidth(chain::bandwidth_notification& note);
+	  void on_update_bandwidth(chain::bandwidth_notification& note);
 
       void update_account_bandwidth( const chain::account_object& a, uint32_t trx_size, const bandwidth_type type );
 
@@ -110,6 +112,8 @@ namespace detail {
       boost::signals2::connection   _pre_apply_transaction_conn;
       boost::signals2::connection   _pre_apply_operation_conn;
       boost::signals2::connection   _post_apply_operation_conn;
+	  boost::signals2::connection   _remain_bandwidth_conn;
+	  boost::signals2::connection   _update_bandwidth_conn;
    };
 
    struct comment_options_extension_visitor
@@ -349,7 +353,7 @@ namespace detail {
                   / ( max_block_size / 4 );
                auto old_reserve_ratio = r.current_reserve_ratio;
 
-               if( distance > 0 )
+               if( distance > 0 ) // r.average_block_size > ( max_block_size / 4 )
                {
                   r.current_reserve_ratio -= ( r.current_reserve_ratio * distance ) / ( distance + DISTANCE_CALC_PRECISION );
 
@@ -357,7 +361,7 @@ namespace detail {
                   if( r.current_reserve_ratio < RESERVE_RATIO_PRECISION )
                      r.current_reserve_ratio = RESERVE_RATIO_PRECISION;
                }
-               else
+               else // r.average_block_size <= ( max_block_size / 4 )
                {
                   // By default, we should always slowly increase the reserve ratio.
                   r.current_reserve_ratio += std::max( RESERVE_RATIO_MIN_INCREMENT, ( r.current_reserve_ratio * distance ) / ( distance - DISTANCE_CALC_PRECISION ) );
@@ -390,6 +394,41 @@ namespace detail {
 
    } FC_LOG_AND_RETHROW() }
    #pragma message( "Remove FC_LOG_AND_RETHROW here before appbase release. It exists to help debug a rare lock exception" )
+
+   void witness_plugin_impl::on_remain_bandwidth(chain::bandwidth_notification& note)
+   {
+	   const auto& props = _db.get_dynamic_global_properties();
+	   const chain::account_object& a = _db.get_account(note.account_name);
+
+	   if (props.total_vesting_shares.amount > 0)
+	   {
+		   bandwidth_type type = bandwidth_type::market;
+		   auto band = _db.find< account_bandwidth_object, by_account_bandwidth_type >(boost::make_tuple(a.name, type));
+		   if (band == nullptr)
+		   {
+			   band = &_db.create< account_bandwidth_object >([&](account_bandwidth_object& b)
+			   {
+				   b.account = a.name;
+				   b.type = type;
+			   });
+		   }
+		   fc::uint128 account_vshares(_db.get_effective_vesting_shares(a, GBS_SYMBOL).amount.value);
+		   fc::uint128 total_vshares(props.total_vesting_shares.amount.value);
+		   fc::uint128 account_average_bandwidth(band->average_bandwidth.value);
+		   fc::uint128 max_virtual_bandwidth(_db.get(reserve_ratio_id_type()).max_virtual_bandwidth);
+
+		   fc::uint128 allocate_bandwidth = (((account_vshares*max_virtual_bandwidth) / total_vshares));
+		   if (allocate_bandwidth > band->average_bandwidth.value) {
+			   note.remain_bandwidth = (int64_t)(((allocate_bandwidth - band->average_bandwidth.value) / GAMEBANK_BANDWIDTH_PRECISION).to_uint64()); // bytes
+		   }
+	   }
+   }
+
+   void witness_plugin_impl::on_update_bandwidth(chain::bandwidth_notification& note)
+   {
+	   const chain::account_object& account = _db.get_account(note.account_name);
+	   update_account_bandwidth(account, note.update_bandwidth, bandwidth_type::market);
+   }
 
    void witness_plugin_impl::update_account_bandwidth( const chain::account_object& a, uint32_t trx_size, const bandwidth_type type )
    {
@@ -670,6 +709,10 @@ void witness_plugin::plugin_initialize(const boost::program_options::variables_m
       [&]( const chain::operation_notification& note ){ my->on_pre_apply_operation( note ); }, *this, 0);
    my->_post_apply_operation_conn = my->_db.add_pre_apply_operation_handler(
       [&]( const chain::operation_notification& note ){ my->on_post_apply_operation( note ); }, *this, 0);
+   my->_remain_bandwidth_conn = my->_db.add_remain_bandwidth_handler(
+	   [&](chain::bandwidth_notification& note) { my->on_remain_bandwidth(note); }, *this, 0);
+   my->_update_bandwidth_conn = my->_db.add_update_bandwidth_handler(
+	   [&](chain::bandwidth_notification& note) { my->on_update_bandwidth(note); }, *this, 0);
 
    add_plugin_index< account_bandwidth_index >( my->_db );
    add_plugin_index< reserve_ratio_index     >( my->_db );

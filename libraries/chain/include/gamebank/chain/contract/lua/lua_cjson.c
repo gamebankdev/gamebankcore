@@ -40,12 +40,16 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <locale.h>
 #include <limits.h>
 #include <lua.h>
 #include <lauxlib.h>
+#include <lobject.h>
+#include <luaconf.h>
+#include <lctype.h>
 
 #include "strbuf.h"
-#include "fpconv.h"
+//#include "fpconv.h"
 
 #ifndef CJSON_VERSION
 #define CJSON_VERSION   "2.1devel"
@@ -82,6 +86,7 @@ typedef enum {
     T_ARR_END,
     T_STRING,
     T_NUMBER,
+	T_INTEGER,
     T_BOOLEAN,
     T_NULL,
     T_COLON,
@@ -99,6 +104,7 @@ static const char *json_token_type_name[] = {
     "T_ARR_END",
     "T_STRING",
     "T_NUMBER",
+	"T_INTEGER",
     "T_BOOLEAN",
     "T_NULL",
     "T_COLON",
@@ -144,6 +150,7 @@ typedef struct {
     union {
         const char *string;
         double number;
+		lua_Integer integer;
         int boolean;
     } value;
     int string_len;
@@ -557,7 +564,7 @@ static void json_append_string(lua_State *l, strbuf_t *json, int lindex)
  */
 static int lua_array_length(lua_State *l, json_config_t *cfg, strbuf_t *json)
 {
-    double k;
+    LUA_INTEGER k;
     int max;
     int items;
 
@@ -568,10 +575,9 @@ static int lua_array_length(lua_State *l, json_config_t *cfg, strbuf_t *json)
     /* table, startkey */
     while (lua_next(l, -2) != 0) {
         /* table, key, value */
-        if (lua_type(l, -2) == LUA_TNUMBER &&
-            (k = lua_tonumber(l, -2))) {
-            /* Integer >= 1 ? */
-            if (floor(k) == k && k >= 1) {
+        if (lua_type(l, -2) == LUA_TNUMBER && lua_isinteger(l,-2) &&
+            (k = lua_tointeger(l, -2))) {
+            if ( k >= 1) {
                 if (k > max)
                     max = k;
                 items++;
@@ -653,39 +659,60 @@ static void json_append_array(lua_State *l, json_config_t *cfg, int current_dept
 static void json_append_number(lua_State *l, json_config_t *cfg,
                                strbuf_t *json, int lindex)
 {
-    double num = lua_tonumber(l, lindex);
-    int len;
+	strbuf_ensure_empty_length(json, MAXNUMBER2STR);
+	int len = luanumber2string(l, lindex, strbuf_empty_ptr(json), strbuf_empty_length(json));
+	strbuf_extend_length(json, len);
+    //double num = lua_tonumber(l, lindex);
+    //int len;
 
-    if (cfg->encode_invalid_numbers == 0) {
-        /* Prevent encoding invalid numbers */
-        if (isinf(num) || isnan(num))
-            json_encode_exception(l, cfg, json, lindex,
-                                  "must not be NaN or Infinity");
-    } else if (cfg->encode_invalid_numbers == 1) {
-        /* Encode NaN/Infinity separately to ensure Javascript compatible
-         * values are used. */
-        if (isnan(num)) {
-            strbuf_append_mem(json, "NaN", 3);
-            return;
-        }
-        if (isinf(num)) {
-            if (num < 0)
-                strbuf_append_mem(json, "-Infinity", 9);
-            else
-                strbuf_append_mem(json, "Infinity", 8);
-            return;
-        }
-    } else {
-        /* Encode invalid numbers as "null" */
-        if (isinf(num) || isnan(num)) {
-            strbuf_append_mem(json, "null", 4);
-            return;
-        }
-    }
+    //if (cfg->encode_invalid_numbers == 0) {
+    //    /* Prevent encoding invalid numbers */
+    //    if (isinf(num) || isnan(num))
+    //        json_encode_exception(l, cfg, json, lindex,
+    //                              "must not be NaN or Infinity");
+    //} else if (cfg->encode_invalid_numbers == 1) {
+    //    /* Encode NaN/Infinity separately to ensure Javascript compatible
+    //     * values are used. */
+    //    if (isnan(num)) {
+    //        strbuf_append_mem(json, "NaN", 3);
+    //        return;
+    //    }
+    //    if (isinf(num)) {
+    //        if (num < 0)
+    //            strbuf_append_mem(json, "-Infinity", 9);
+    //        else
+    //            strbuf_append_mem(json, "Infinity", 8);
+    //        return;
+    //    }
+    //} else {
+    //    /* Encode invalid numbers as "null" */
+    //    if (isinf(num) || isnan(num)) {
+    //        strbuf_append_mem(json, "null", 4);
+    //        return;
+    //    }
+    //}
 
-    strbuf_ensure_empty_length(json, FPCONV_G_FMT_BUFSIZE);
-    len = fpconv_g_fmt(strbuf_empty_ptr(json), num, cfg->encode_number_precision);
-    strbuf_extend_length(json, len);
+    //strbuf_ensure_empty_length(json, FPCONV_G_FMT_BUFSIZE);
+    //len = fpconv_g_fmt(strbuf_empty_ptr(json), num, cfg->encode_number_precision);
+    //strbuf_extend_length(json, len);
+}
+
+int luanumber2string(lua_State *l, int lindex, char *buff, int buffsize )
+{
+	int len = 0;
+	if (lua_isinteger(l, lindex)) {
+		len = lua_integer2str(buff, buffsize, lua_tointeger(l,lindex));
+	}
+	else if (lua_isnumber(l, lindex)) {
+		len = lua_number2str(buff, buffsize, lua_tonumber(l, lindex));
+#if !defined(LUA_COMPAT_FLOATSTRING)
+		if (buff[strspn(buff, "-0123456789")] == '\0') {  /* looks like an int? */
+			buff[len++] = lua_getlocaledecpoint();
+			buff[len++] = '0';  /* adds '.0' to result */
+		}
+#endif
+	}
+	return len;
 }
 
 static void json_append_object(lua_State *l, json_config_t *cfg,
@@ -1100,12 +1127,68 @@ static int json_is_invalid_number(json_parse_t *json)
     return 0;
 }
 
+static inline int valid_number_character(char ch)
+{
+	char lower_ch;
+
+	if ('0' <= ch && ch <= '9')
+		return 1;
+	if (ch == '-' || ch == '+' || ch == '.')
+		return 1;
+
+	/* Hex digits, exponent (e), base (p), "infinity",.. */
+	lower_ch = ch | 0x20;
+	if ('a' <= lower_ch && lower_ch <= 'y')
+		return 1;
+
+	return 0;
+}
+
+/* Calculate the size of the buffer required for a strtod locale
+* conversion. */
+static int strtod_buffer_size(const char *s)
+{
+	const char *p = s;
+
+	while (valid_number_character(*p))
+		p++;
+
+	return p - s;
+}
+
+static int json_str2num(json_parse_t *json, json_token_t *token, char **endptr)
+{
+	const char *s = json->ptr;
+	lua_Integer i; lua_Number n;
+	const char *e;
+	int buflen = strtod_buffer_size(s);
+	if (buflen < 1)
+		return 0;
+	char buf[MAXNUMBER2STR];
+	memcpy(buf, s, buflen);
+	buf[buflen] = 0;
+	if ((e = l_str2int(buf, &i)) != NULL) {  /* try as an integer */
+		token->type = T_INTEGER;
+		token->value.integer = i;
+		*endptr = s + (e - buf);
+	}
+	else if ((e = l_str2d(buf, &n)) != NULL) {  /* else try as a float */
+		token->type = T_NUMBER;
+		token->value.number = n;
+		*endptr = s + (e - buf);
+	}
+	else
+		return 0;  /* conversion failed */
+	return (e - s) + 1;  /* success; return string size */
+}
+
 static void json_next_number_token(json_parse_t *json, json_token_t *token)
 {
     char *endptr;
 
-    token->type = T_NUMBER;
-    token->value.number = fpconv_strtod(json->ptr, &endptr);
+	json_str2num(json, token, &endptr);
+	//token->type = T_NUMBER;
+	//token->value.number = fpconv_strtod(json->ptr, &endptr);
     if (json->ptr == endptr)
         json_set_token_error(token, json, "invalid number");
     else
@@ -1338,6 +1421,9 @@ static void json_process_value(lua_State *l, json_parse_t *json,
     case T_NUMBER:
         lua_pushnumber(l, token->value.number);
         break;;
+	case T_INTEGER:
+		lua_pushinteger(l, token->value.integer);
+		break;;
     case T_BOOLEAN:
         lua_pushboolean(l, token->value.boolean);
         break;;
@@ -1504,8 +1590,8 @@ static int lua_cjson_new(lua_State *l)
         { NULL, NULL }
     };
 
-    /* Initialise number conversions */
-    fpconv_init();
+    ///* Initialise number conversions */
+    //fpconv_init();
 
     /* cjson module table */
     lua_newtable(l);

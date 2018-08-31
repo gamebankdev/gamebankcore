@@ -299,6 +299,9 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   LG *l = cast(LG *, (*f)(ud, NULL, LUA_TTHREAD, sizeof(LG)));
   if (l == NULL) return NULL;
   L = &l->l.l;
+
+  init_extend(&(L->extend));
+
   g = &l->g;
   L->next = NULL;
   L->tt = LUA_TTHREAD;
@@ -334,15 +337,7 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
     close_state(L);
     L = NULL;
   }
-  // init lua_Extend
-  L->extend.current_opcode_execute_count = 0;
-  L->extend.force_stop = 0;
-  L->extend.memory_limit = 0;
-  L->extend.opcode_execute_limit = 0;
-  L->extend.opcode_limit = 0;
-  memset(L->extend.contract_name, 0, sizeof(L->extend.contract_name));
-  memset(L->extend.caller_name, 0, sizeof(L->extend.caller_name));
-  L->extend.pointer = NULL;
+  
   return L;
 }
 

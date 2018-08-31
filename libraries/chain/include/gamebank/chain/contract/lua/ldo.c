@@ -127,7 +127,8 @@ l_noret luaD_throw (lua_State *L, int errcode) {
         lua_unlock(L);
         g->panic(L);  /* call panic function (last chance to jump out) */
       }
-      abort();
+      //abort();
+	  set_extend_error(&(L->extend), LUA_EXTEND_THROW);
     }
   }
 }
@@ -317,6 +318,9 @@ static void tryfuncTM (lua_State *L, StkId func) {
   StkId p;
   if (!ttisfunction(tm))
     luaG_typeerror(L, func, "call");
+  if (L->extend.force_stop) {
+	  return;
+  }  
   /* Open a hole inside the stack at 'func' */
   for (p = L->top; p > func; p--)
     setobjs2s(L, p, p-1);
@@ -465,6 +469,8 @@ int luaD_precall (lua_State *L, StkId func, int nresults) {
     default: {  /* not a function */
       checkstackp(L, 1, func);  /* ensure space for metamethod */
       tryfuncTM(L, func);  /* try to get '__call' metamethod */
+	  if (L->extend.force_stop)
+		  return 0;
       return luaD_precall(L, func, nresults);  /* now it must be a function */
     }
   }
@@ -727,6 +733,8 @@ int luaD_pcall (lua_State *L, Pfunc func, void *u,
   ptrdiff_t old_errfunc = L->errfunc;
   L->errfunc = ef;
   status = luaD_rawrunprotected(L, func, u);
+  if (L->extend.force_stop)
+	  status = LUA_ERRRUN;
   if (status != LUA_OK) {  /* an error occurred? */
     StkId oldtop = restorestack(L, old_top);
     luaF_close(L, oldtop);  /* close possible pending closures */

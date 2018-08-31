@@ -603,6 +603,8 @@ static void statlist (LexState *ls) {
       return;  /* 'return' must be last statement */
     }
     statement(ls);
+	if (ls->L->extend.force_stop)
+		break;
   }
 }
 
@@ -794,6 +796,8 @@ static void body (LexState *ls, expdesc *e, int ismethod, int line) {
   parlist(ls);
   checknext(ls, ')');
   statlist(ls);
+  if (ls->L->extend.force_stop)
+	  return;
   new_fs.f->lastlinedefined = ls->linenumber;
   check_match(ls, TK_END, TK_FUNCTION, line);
   codeclosure(ls, e);
@@ -896,6 +900,8 @@ static void suffixedexp (LexState *ls, expdesc *v) {
   FuncState *fs = ls->fs;
   int line = ls->linenumber;
   primaryexp(ls, v);
+  if (ls->L->extend.force_stop)
+	  return;
   for (;;) {
     switch (ls->t.token) {
       case '.': {  /* fieldsel */
@@ -1406,6 +1412,8 @@ static void test_then_block (LexState *ls, int *escapelist) {
     jf = v.f;
   }
   statlist(ls);  /* 'then' part */
+  if (ls->L->extend.force_stop)
+	  return;
   leaveblock(fs);
   if (ls->t.token == TK_ELSE ||
       ls->t.token == TK_ELSEIF)  /* followed by 'else'/'elseif'? */
@@ -1419,6 +1427,8 @@ static void ifstat (LexState *ls, int line) {
   FuncState *fs = ls->fs;
   int escapelist = NO_JUMP;  /* exit list for finished parts */
   test_then_block(ls, &escapelist);  /* IF cond THEN block */
+  if (ls->L->extend.force_stop)
+	  return;
   while (ls->t.token == TK_ELSEIF)
     test_then_block(ls, &escapelist);  /* ELSEIF cond THEN block */
   if (testnext(ls, TK_ELSE))
@@ -1480,6 +1490,8 @@ static void funcstat (LexState *ls, int line) {
   luaX_next(ls);  /* skip FUNCTION */
   ismethod = funcname(ls, &v);
   body(ls, &b, ismethod, line);
+  if (ls->L->extend.force_stop)
+	  return;
   luaK_storevar(ls->fs, &v, &b);
   luaK_fixline(ls->fs, line);  /* definition "happens" in the first line */
 }
@@ -1490,12 +1502,16 @@ static void exprstat (LexState *ls) {
   FuncState *fs = ls->fs;
   struct LHS_assign v;
   suffixedexp(ls, &v.v);
+  if (ls->L->extend.force_stop)
+	  return;
   if (ls->t.token == '=' || ls->t.token == ',') { /* stat -> assignment ? */
     v.prev = NULL;
     assignment(ls, &v, 1);
   }
   else {  /* stat -> func */
     check_condition(ls, v.v.k == VCALL, "syntax error");
+	if (ls->L->extend.force_stop)
+		return;
     SETARG_C(getinstruction(fs, &v.v), 1);  /* call statement uses no results */
   }
 }
@@ -1596,6 +1612,8 @@ static void statement (LexState *ls) {
       break;
     }
   }
+  if (ls->L->extend.force_stop)
+	  return;
   lua_assert(ls->fs->f->maxstacksize >= ls->fs->freereg &&
              ls->fs->freereg >= ls->fs->nactvar);
   ls->fs->freereg = ls->fs->nactvar;  /* free registers */
@@ -1618,6 +1636,8 @@ static void mainfunc (LexState *ls, FuncState *fs) {
   newupvalue(fs, ls->envn, &v);  /* ...set environment upvalue */
   luaX_next(ls);  /* read first token */
   statlist(ls);  /* parse main body */
+  if (ls->L->extend.force_stop)
+	  return;
   check(ls, TK_EOS);
   close_func(ls);
 }

@@ -22,7 +22,7 @@ enum witness_plugin_object_type
 
 enum bandwidth_type
 {
-   post,    ///< Rate limiting posting reward eligibility over time
+   none,    ///
    forum,   ///< Rate limiting for all forum related actins
    market   ///< Rate limiting for all other actions
 };
@@ -124,7 +124,7 @@ typedef multi_index_container <
 
 } } } // gamebank::plugins::witness
 
-FC_REFLECT_ENUM( gamebank::plugins::witness::bandwidth_type, (post)(forum)(market) )
+FC_REFLECT_ENUM( gamebank::plugins::witness::bandwidth_type, (none)(forum)(market) )
 
 FC_REFLECT( gamebank::plugins::witness::account_bandwidth_object,
             (id)(account)(type)(average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update) )
