@@ -87,7 +87,8 @@ std::string asset_num_to_string( uint32_t asset_num )
    switch( asset_num )
    {
       case GAMEBANK_ASSET_NUM_GBC:
-         return "GBC";
+         //return "GBC";
+         return "GB";
       case GAMEBANK_ASSET_NUM_GBD:
          return "GBD";
       case GAMEBANK_ASSET_NUM_GBS:
