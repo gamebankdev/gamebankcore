@@ -41,7 +41,7 @@ namespace gamebank { namespace protocol {
 
       account_name_type author;
       string            permlink;
-      asset             payout;
+      asset             payout;	//use GBC
    };
 
 

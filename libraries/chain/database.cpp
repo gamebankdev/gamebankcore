@@ -1091,7 +1091,9 @@ inline const void database::push_virtual_operation( const operation& op, bool fo
    operation_notification note(op);
    ++_current_virtual_op;
    note.virtual_op = _current_virtual_op;
+   //emit the _pre_apply_operation_signal
    notify_pre_apply_operation( note );
+   //emit the _post_apply_operation_signal
    notify_post_apply_operation( note );
 }
 
@@ -1101,7 +1103,7 @@ void database::notify_pre_apply_operation( operation_notification& note )
    note.block        = _current_block_num;
    note.trx_in_block = _current_trx_in_block;
    note.op_in_trx    = _current_op_in_trx;
-
+   //emit the signal
    GAMEBANK_TRY_NOTIFY( _pre_apply_operation_signal, note )
 }
 
@@ -1250,7 +1252,7 @@ std::pair< asset, asset > database::create_gbd( const account_object& to_account
       }
       else
       {
-      //不存在喂价，GBD不可能转换为GBC，收益全部以GBD的方式给账户
+      //不存在喂价，收益全部以GBC的方式给账户
          adjust_balance( to_account, gbc );
          assets.second = gbc;
       }
@@ -1307,22 +1309,16 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
 	  //POWER UP时to_reward_balance为false
 	  //to_reward_balance默认为false
 
-	  //获取GBC to GBS 汇率
-	  //对作者post奖励，如果是GBC_HARDFORK_0_17__659,则取get_reward_vesting_share_price
       price vesting_share_price = to_reward_balance ? cprops.get_reward_vesting_share_price() : cprops.get_vesting_share_price();
-
 	  // Calculate new vesting from provided liquid using share price.
-      //经过汇率计算后得出可获得的VEST
       asset new_vesting = calculate_new_vesting( vesting_share_price );
 
 	  // Add new vesting to owner's balance.
-      //新增GBS到账户存款
       if( to_reward_balance )
          adjust_reward_balance( to_account, liquid, new_vesting );
       else
          adjust_balance( to_account, new_vesting );
       // Update global vesting pool numbers.
-      //更新全局gamebank和vest状态
       modify( cprops, [&]( dynamic_global_property_object& props )
       {
          if( to_reward_balance )
@@ -1851,7 +1847,6 @@ share_type database::cashout_comment_helper( util::comment_reward_context& ctx, 
 			//post作者和投票者奖励和
             claimed_reward = author_tokens + curation_tokens;
 
-			//给谁?
             for( auto& b : comment.beneficiaries )
             {
                auto benefactor_tokens = ( author_tokens * b.weight ) / GAMEBANK_100_PERCENT;
@@ -1861,24 +1856,30 @@ share_type database::cashout_comment_helper( util::comment_reward_context& ctx, 
             }
             //确定author的分配
             author_tokens -= total_beneficiary;
-
-            auto gbd_gbc     = ( author_tokens * comment.percent_gamebank_dollars ) / ( 2 * GAMEBANK_100_PERCENT ) ;
-            auto vesting_gbc = author_tokens - gbd_gbc;
+			
+            //auto gbd_gbc     = ( author_tokens * comment.percent_gamebank_dollars ) / ( 2 * GAMEBANK_100_PERCENT ) ;
+			auto gbc_to_author = (author_tokens * GAMEBANK_100_PERCENT) / (2 * GAMEBANK_100_PERCENT);
+            auto vesting_gbc = author_tokens - gbc_to_author;
 
             const auto& author = get_account( comment.author );
-			//以SP分配给author, 返回GBC转为SP的资产数量
+			//vest to author
             auto vest_created = create_vesting( author, asset( vesting_gbc, GBC_SYMBOL ), true );
 			//以GBD/GBC分配给author
-            auto gbd_payout = create_gbd( author, asset( gbd_gbc, GBC_SYMBOL ), true );
+            //auto gbd_payout = create_gbd( author, asset( gbd_gbc, GBC_SYMBOL ), true );
+			//not use gbd to author
+			adjust_balance(author, asset( gbc_to_author, GBC_SYMBOL));
 
-			//记录因评论收益而新建的GBD资产，评论的curation收益，评论的beneficiary收益
-            adjust_total_payout( comment, gbd_payout.first + to_gbd( gbd_payout.second + asset( vesting_gbc, GBC_SYMBOL ) ), to_gbd( asset( curation_tokens, GBC_SYMBOL ) ), to_gbd( asset( total_beneficiary, GBC_SYMBOL ) ) );
+            //adjust_total_payout( comment, gbd_payout.first + to_gbd( gbd_payout.second + asset( vesting_gbc, GBC_SYMBOL ) ), to_gbd( asset( curation_tokens, GBC_SYMBOL ) ), to_gbd( asset( total_beneficiary, GBC_SYMBOL ) ) );
+            //以GBC单位记录评论收益
+			adjust_total_payout( comment, asset(gbc_to_author, GBC_SYMBOL), asset( curation_tokens, GBC_SYMBOL ), asset( total_beneficiary, GBC_SYMBOL ));
 
-			//奖励分配算虚拟操作
 			//作者奖励操作：需要GBD奖励值+GBC奖励值+GBS奖励值
-            push_virtual_operation( author_reward_operation( comment.author, to_string( comment.permlink ), gbd_payout.first, gbd_payout.second, vest_created ) );
+            //push_virtual_operation( author_reward_operation( comment.author, to_string( comment.permlink ), gbd_payout.first, gbd_payout.second, vest_created ) );
+            push_virtual_operation( author_reward_operation( comment.author, to_string( comment.permlink ), asset(0, GBD_SYMBOL), asset(gbc_to_author, GBC_SYMBOL), vest_created ) );
+			
 			//作者+投票者总奖励
-            push_virtual_operation( comment_reward_operation( comment.author, to_string( comment.permlink ), to_gbd( asset( claimed_reward, GBC_SYMBOL ) ) ) );
+            //push_virtual_operation( comment_reward_operation( comment.author, to_string( comment.permlink ), to_gbd( asset( claimed_reward, GBC_SYMBOL ) ) ) );
+            push_virtual_operation( comment_reward_operation( comment.author, to_string( comment.permlink ), asset( claimed_reward, GBC_SYMBOL ) )  );
 
 			//投票者奖励见curation_reward_operation
             #ifndef IS_LOW_MEM
@@ -2063,49 +2064,43 @@ void database::process_comment_cashout()
  *  This method does not pay out witnesses.
  */
  //called in _apply_block
- //参见白皮书--Current Allocation & Supply
 void database::process_funds()
 {
    const auto& props = get_dynamic_global_properties();
    const auto& wso = get_witness_schedule_object();
-
-	//当前分配规则（第16个硬分叉之后）
       /**
        * At block 7,000,000 have a 9.5% instantaneous inflation rate, decreasing to 0.95% at a rate of 0.01%
        * every 250k blocks. This narrowing will take approximately 20.5 years and will complete on block 220,750,000
        */
       int64_t start_inflation_rate = int64_t( GAMEBANK_INFLATION_RATE_START_PERCENT );
-		//每250K个区块，通胀率降低1%，inflation_rate_adjustment每250k个区块改变一次
       int64_t inflation_rate_adjustment = int64_t( head_block_num() / GAMEBANK_INFLATION_NARROWING_PERIOD );
-		//在220750k区块达到通胀率0.95%
       int64_t inflation_rate_floor = int64_t( GAMEBANK_INFLATION_RATE_STOP_PERCENT );
 
       // below subtraction cannot underflow int64_t because inflation_rate_adjustment is <2^32
-
-	  //当前(head_block_num)的通胀率
       int64_t current_inflation_rate = std::max( start_inflation_rate - inflation_rate_adjustment, inflation_rate_floor );
 /*
-白皮书--Current Allocation & Supply
+Current Allocation & Supply
 Of the new tokens that are generated, 75% go to fund the reward pool, which is split between authors and
 curators. Another 15% of the new tokens are awarded to holders of SP. The remaining 10% pays for the
 witnesses to power the blockchain.
 */
 	  //每生成一个新区块而新增的代币！
 	  //props.virtual_supply.amount * current_inflation_rate 代表当前年通胀率下货币每年新增量
-	  //由于此函数在没生成一次区块（3秒）才调用一次
       auto new_gbc = ( props.virtual_supply.amount * current_inflation_rate ) / ( int64_t( GAMEBANK_100_PERCENT ) * int64_t( GAMEBANK_BLOCKS_PER_YEAR ) );
-		//新增代币的75% to reward pool
+	  
+	  //新增代币的75% to reward pool
       auto content_reward = ( new_gbc * GAMEBANK_CONTENT_REWARD_PERCENT ) / GAMEBANK_100_PERCENT;
       
       content_reward = pay_reward_funds( content_reward ); /// 75% to content creator
-		//新增代币的15% to vesting fund，授予给SP持有者
+	  
+	  //新增代币的15% to vesting fund，授予给SP持有者
       auto vesting_reward = ( new_gbc * GAMEBANK_VESTING_FUND_PERCENT ) / GAMEBANK_100_PERCENT; /// 15% to vesting fund
-	//新增代币的 10% to witness pay（power the blockchain）
+	  
+	  //新增代币的 10% to witness pay（power the blockchain）
       auto witness_reward = new_gbc - content_reward - vesting_reward; /// Remaining 10% to witness pay
 
-	  //生产当前区块的见证人
       const auto& cwit = get_witness( props.current_witness );
-		//是为了归一化计算
+
       witness_reward *= GAMEBANK_MAX_WITNESSES;
 
 	//三种不同类型的见证人，获取的witness_reward因各自权重的不同而不同
@@ -2117,25 +2112,19 @@ witnesses to power the blockchain.
          witness_reward *= wso.top19_weight;
       else
          wlog( "Encountered unknown witness type for witness: ${w}", ("w", cwit.owner) );
-      //归一化，得到最终的witness_reward
+     
       witness_reward /= wso.witness_pay_normalization_factor;
-
-		//因为witness_reward重新计算new_gbc
       new_gbc = content_reward + vesting_reward + witness_reward;
 
-	  //更新全局属性
       modify( props, [&]( dynamic_global_property_object& p )
       {
 		//SP持有者总奖池
          p.total_vesting_fund_gbc += asset( vesting_reward, GBC_SYMBOL );
-
-		//内容
          p.current_supply           += asset( new_gbc, GBC_SYMBOL );
          p.virtual_supply           += asset( new_gbc, GBC_SYMBOL );
       });
 
 		//生成区块的见证人奖励
-	  //把reward转换为GBS，增加了见证人账户的vest_shares(并且增加了全局的total_vesting_fund_gbc和total_vesting_shares)
       const auto& producer_reward = create_vesting( get_account( cwit.owner ), asset( witness_reward, GBC_SYMBOL ) );
       push_virtual_operation( producer_reward_operation( cwit.owner, producer_reward ) );
    
@@ -2371,7 +2360,6 @@ void database::process_conversions()
    auto itr = request_by_date.begin();
 
    const auto& fhistory = get_feed_history();
-   //无有效喂价
    if( fhistory.current_median_history.is_null() )
       return;
 
@@ -2816,7 +2804,7 @@ void database::init_genesis( uint64_t init_supply )
       create< witness_schedule_object >( [&]( witness_schedule_object& wso )
       {
          wso.current_shuffled_witnesses[0] = GAMEBANK_INIT_MINER_NAME;
-      } );
+      } );	  
    }
    FC_CAPTURE_AND_RETHROW()
 }
@@ -3012,12 +3000,17 @@ void database::_apply_block( const signed_block& next_block )
    _current_trx_in_block = 0;
    _current_virtual_op   = 0;
 
-   //???
    if( BOOST_UNLIKELY( next_block_num == 1 ) )
    {
+	  
       //
       apply_pre_genesis_patches();
-      
+	  uint64_t init_to_vest = (GAMEBANK_INIT_SUPPLY * GAMEBANK_INIT_VESTING_SUPPLY_PERCENT) / GAMEBANK_100_PERCENT;
+	  ilog("start convert ${init} GBC to VEST for initminer", ("init", init_to_vest / 1000));
+	  const auto& acc = get_account(GAMEBANK_INIT_MINER_NAME);
+	  adjust_balance(acc, -asset(init_to_vest, GBC_SYMBOL));
+	  create_vesting(acc, asset(init_to_vest, GBC_SYMBOL));
+	  
       // For every existing before the head_block_time (genesis time), apply the hardfork
       // This allows the test net to launch with past hardforks and apply the next harfork when running
 
@@ -3149,6 +3142,7 @@ void database::_apply_block( const signed_block& next_block )
    clear_expired_transactions();
    clear_expired_orders();
    clear_expired_nonfungible_funds_on_sale();
+   reclaim_account_creation_delegations();
    clear_expired_delegations();
    //调用洗牌算法
    update_witness_schedule(*this);
@@ -4156,6 +4150,29 @@ void database::clear_expired_delegations()
       remove( *itr );
       itr = delegations_by_exp.begin();
    }
+}
+
+void database::reclaim_account_creation_delegations()
+{
+	auto now = head_block_time();
+	const auto& didx = get_index< vesting_delegation_index>().indices().get< by_delegation_time >();
+	auto itr = didx.lower_bound(GAMEBANK_INIT_MINER_NAME);
+	while (itr != didx.end() && itr->delegator == GAMEBANK_INIT_MINER_NAME && itr->min_delegation_time < now)
+	{
+			modify(get_account(itr->delegatee), [&](account_object& a)
+			{
+				a.received_vesting_shares -= itr->vesting_shares;
+			});
+			create< vesting_delegation_expiration_object >([&](vesting_delegation_expiration_object& obj)
+			{
+				obj.delegator = itr->delegator;
+				obj.vesting_shares = itr->vesting_shares;
+				obj.expiration = std::max(now + get_dynamic_global_properties().delegation_return_period, itr->min_delegation_time);
+			});
+			const auto &current = *itr;
+			remove(current);
+			itr++;
+	}	
 }
 
 //修改账户存款

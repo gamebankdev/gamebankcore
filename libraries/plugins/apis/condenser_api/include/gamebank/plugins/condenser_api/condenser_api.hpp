@@ -326,8 +326,8 @@ struct api_comment_object
 
    uint16_t          reward_weight = 0;
 
-   legacy_asset      total_payout_value;
-   legacy_asset      curator_payout_value;
+   legacy_asset      total_payout_value;	//post for author reward £¨has cashout£©
+   legacy_asset      curator_payout_value;	//post for  votor reward £¨has cashout£©
 
    share_type        author_rewards;
 
@@ -680,7 +680,8 @@ struct discussion : public api_comment_object
 
    string                        url; /// /category/@rootauthor/root_permlink#author/permlink
    string                        root_title;
-   legacy_asset                  pending_payout_value; ///< gbd
+   //The reward to be received after 7 days(if not feed price, the reward will be payed by GBC), after cashout, this will be 0
+   legacy_asset                  pending_payout_value; 
    legacy_asset                  total_pending_payout_value; ///< gbd including replies
    vector< tags::vote_state >    active_votes;
    vector< string >              replies; ///< author/slug mapping
@@ -723,7 +724,7 @@ struct state
 
    extended_dynamic_global_properties                 props;
 
-   tag_index                                          tag_idx;
+   tag_index                                          tag_idx;	//top 50 trending tags
 
    /**
     * "" is the global tags::discussion index
@@ -742,6 +743,8 @@ struct state
    api_witness_schedule_object                        witness_schedule;
    legacy_price                                       feed_price;
    string                                             error;
+
+   uint32_t											total_posts;
 };
 
 struct scheduled_hardfork
@@ -1011,7 +1014,7 @@ DEFINE_API_ARGS( get_tags_used_by_author,                vector< variant >,   ve
 DEFINE_API_ARGS( get_post_discussions_by_payout,         vector< variant >,   vector< discussion > )
 DEFINE_API_ARGS( get_comment_discussions_by_payout,      vector< variant >,   vector< discussion > )
 DEFINE_API_ARGS( get_discussions_by_trending,            vector< variant >,   vector< discussion > )
-DEFINE_API_ARGS( get_discussions_by_created,             vector< variant >,   vector< discussion > )
+DEFINE_API_ARGS( get_discussions_by_created,             vector< variant >,   state )
 DEFINE_API_ARGS( get_discussions_by_active,              vector< variant >,   vector< discussion > )
 DEFINE_API_ARGS( get_discussions_by_cashout,             vector< variant >,   vector< discussion > )
 DEFINE_API_ARGS( get_discussions_by_votes,               vector< variant >,   vector< discussion > )
@@ -1166,7 +1169,7 @@ FC_REFLECT( gamebank::plugins::condenser_api::api_tag_object,
             (name)(total_payouts)(net_votes)(top_posts)(comments)(trending) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::state,
-            (current_route)(props)(tag_idx)(tags)(content)(accounts)(witnesses)(discussion_idx)(witness_schedule)(feed_price)(error) )
+            (current_route)(props)(tag_idx)(tags)(content)(accounts)(witnesses)(discussion_idx)(witness_schedule)(feed_price)(error)(total_posts) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::api_limit_order_object,
             (id)(created)(expiration)(seller)(orderid)(for_sale)(sell_price)(real_price)(rewarded) )

@@ -153,13 +153,14 @@ comment_metadata tags_plugin_impl::filter_tags( const comment_object& c, const c
       try
       {
          meta = fc::json::from_string( to_string( con.json_metadata ) ).as< comment_metadata >();
+		 ilog("meta.tags.size ${s}", ("s", meta.tags.size()));
       }
       catch( const fc::exception& e )
       {
          // Do nothing on malformed json_metadata
+		  elog("exception e${e}", ("e", e));
       }
-   }
-
+   } 
    // We need to write the transformed tags into a temporary
    // local container because we can't modify meta.tags concurrently
    // as we iterate over it.
@@ -207,7 +208,9 @@ void tags_plugin_impl::update_tag( const tag_object& current, const comment_obje
       });
       add_stats( current, stats );
     } else {
-       _db.remove( current );
+		//该评论已经过了支付时间
+		ilog("!! don't remove tag_object tag${t} here", ("t", current.tag));
+        //_db.remove( current );
     }
 }
 
@@ -218,7 +221,7 @@ void tags_plugin_impl::create_tag( const string& tag, const comment_object& comm
 
    if( comment.parent_author.size() )
       parent = _db.get_comment( comment.parent_author, comment.parent_permlink ).id;
-
+   ilog("create new tag${t} for author_id${id}", ("t", tag)("id", author));
    const auto& tag_obj = _db.create<tag_object>( [&]( tag_object& obj )
    {
        obj.tag               = tag;
@@ -241,6 +244,7 @@ void tags_plugin_impl::create_tag( const string& tag, const comment_object& comm
    auto itr = idx.lower_bound( boost::make_tuple(author,tag) );
    if( itr != idx.end() && itr->author == author && itr->tag == tag )
    {
+	   //作者使用过相同的tag
       _db.modify( *itr, [&]( author_tag_stats_object& stats )
       {
          stats.total_posts++;
@@ -248,6 +252,7 @@ void tags_plugin_impl::create_tag( const string& tag, const comment_object& comm
    }
    else
    {
+	   //作者第一次使用这个tag
       _db.create<author_tag_stats_object>( [&]( author_tag_stats_object& stats )
       {
          stats.author = author;
@@ -270,7 +275,9 @@ void tags_plugin_impl::update_tags( const comment_object& c, bool parse_tags )co
 #ifndef IS_LOW_MEM
    if( parse_tags )
    {
+	  //获取json_metadata中所有的tags
       auto meta = filter_tags( c, _db.get< comment_content_object, chain::by_comment >( c.id ) );
+	  //当前comment对应的tag_object在tag_index中对应的位置
       auto citr = comment_idx.lower_bound( c.id );
 
       map< string, const tag_object* > existing_tags;
@@ -278,6 +285,7 @@ void tags_plugin_impl::update_tags( const comment_object& c, bool parse_tags )co
 
       while( citr != comment_idx.end() && citr->comment == c.id )
       {
+	  //tag_index存在对应的tag_object，且tag是当前comment创建的(create_tag)
          const tag_object* tag = &*citr;
          ++citr;
 
@@ -376,6 +384,7 @@ struct operation_visitor
    {
       if( _my._started )
       {
+		  ilog("call update_tags in operator comment_operation, metadata size${size}", ("size", op.json_metadata.size()));
          _my.update_tags( _my._db.get_comment( op.author, op.permlink ), op.json_metadata.size() );
       }
    }

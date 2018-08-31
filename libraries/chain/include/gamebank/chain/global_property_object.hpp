@@ -32,8 +32,8 @@ namespace gamebank { namespace chain {
 
          id_type           id;
 
-         uint32_t          head_block_number = 0;	//	区块编号
-         block_id_type     head_block_id;			//	区块id(从区块id中可转换为区块编号:这里面有个地方存的是区块编号)
+         uint32_t          head_block_number = 0;
+         block_id_type     head_block_id;
          time_point_sec    time;
          account_name_type current_witness;
 

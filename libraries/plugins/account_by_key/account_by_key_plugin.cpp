@@ -232,9 +232,10 @@ void account_by_key_plugin::plugin_initialize( const boost::program_options::var
    {
       ilog( "Initializing account_by_key plugin" );
       chain::database& db = appbase::app().get_plugin< gamebank::plugins::chain::chain_plugin >().db();
-
+	  //connect the _pre_apply_operation_signal to functor
       my->_pre_apply_operation_conn = db.add_pre_apply_operation_handler( [&]( const operation_notification& note ){ my->on_pre_apply_operation( note ); }, *this, 0 );
-      my->_post_apply_operation_conn = db.add_post_apply_operation_handler( [&]( const operation_notification& note ){ my->on_post_apply_operation( note ); }, *this, 0 );
+      //connect the _post_apply_operation_signal to functor
+	  my->_post_apply_operation_conn = db.add_post_apply_operation_handler( [&]( const operation_notification& note ){ my->on_post_apply_operation( note ); }, *this, 0 );
 
       add_plugin_index< key_lookup_index >(db);
    }

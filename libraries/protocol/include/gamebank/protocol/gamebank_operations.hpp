@@ -11,8 +11,8 @@ namespace gamebank { namespace protocol {
 
    struct account_create_operation : public base_operation
    {
-      asset             fee;
-      account_name_type creator;
+      asset             fee;			
+      account_name_type creator;		//must be the initminer
       account_name_type new_account_name;
       authority         owner;
       authority         active;

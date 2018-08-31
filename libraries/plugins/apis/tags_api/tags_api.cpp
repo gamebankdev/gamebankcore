@@ -65,9 +65,11 @@ class tags_api_impl
       chain::database& _db;
       std::shared_ptr< gamebank::plugins::follow::follow_api > _follow_api;
 };
-
+//获取N条最流行的标签
+//TODO REMOVE
 DEFINE_API_IMPL( tags_api_impl, get_trending_tags )
 {
+	//args: {string(), 50}
    FC_ASSERT( args.limit <= 1000, "Cannot retrieve more than 1000 tags at a time." );
    get_trending_tags_return result;
    result.tags.reserve( args.limit );
@@ -84,7 +86,7 @@ DEFINE_API_IMPL( tags_api_impl, get_trending_tags )
       else
          itr = ridx.iterator_to( *nitr );
    }
-
+   //获取N条最流行的标签
    while( itr != ridx.end() && result.tags.size() < args.limit )
    {
       result.tags.push_back( api_tag_object( *itr ) );
@@ -92,7 +94,7 @@ DEFINE_API_IMPL( tags_api_impl, get_trending_tags )
    }
    return result;
 }
-
+//获取作者使用过的标签信息，最多返回1000个
 DEFINE_API_IMPL( tags_api_impl, get_tags_used_by_author )
 {
    const auto* acnt = _db.find_account( args.author );
@@ -105,6 +107,7 @@ DEFINE_API_IMPL( tags_api_impl, get_tags_used_by_author )
 
    while( itr != tidx.end() && itr->author == acnt->id && result.tags.size() < 1000 )
    {
+	   //<标签名, 发帖总数>
       result.tags.push_back( tag_count_object( { itr->tag, itr->total_posts } ) );
       ++itr;
    }
@@ -134,7 +137,8 @@ DEFINE_API_IMPL( tags_api_impl, get_content_replies )
    auto itr = by_permlink_idx.find( boost::make_tuple( args.author, args.permlink ) );
 
    get_content_replies_return result;
-
+   
+   //获取该author的所有下一级评论，保存为discussion
    while( itr != by_permlink_idx.end() && itr->parent_author == args.author && chain::to_string( itr->parent_permlink ) == args.permlink )
    {
       result.discussions.push_back( discussion( *itr, _db ) );
@@ -426,15 +430,17 @@ DEFINE_API_IMPL( tags_api_impl, get_discussions_by_promoted )
    return get_discussions( args, tag, parent, tidx, tidx_itr, args.truncate_body, filter_default, exit_default, []( const tags::tag_object& t ){ return t.promoted_balance == 0; }  );
 }
 
+//获取收到的所有回复
 DEFINE_API_IMPL( tags_api_impl, get_replies_by_last_update )
 {
    get_replies_by_last_update_return result;
 
 #ifndef IS_LOW_MEM
+   //args: {account_name, "", 50}
    FC_ASSERT( args.limit <= 100 );
    const auto& last_update_idx = _db.get_index< comment_index, by_last_update >();
    auto itr = last_update_idx.begin();
-   account_name_type parent_author = args.start_parent_author;
+   account_name_type parent_author = args.start_parent_author;	
 
    if( args.start_permlink.size() )
    {
@@ -444,15 +450,18 @@ DEFINE_API_IMPL( tags_api_impl, get_replies_by_last_update )
    }
    else if( args.start_parent_author.size() )
    {
+	   //指向comment_index中，parent_author为"我"的的第一个评论
       itr = last_update_idx.lower_bound( args.start_parent_author );
    }
 
    result.discussions.reserve( args.limit );
-
+   
+   //获取"我"为parent的所有评论
    while( itr != last_update_idx.end() && result.discussions.size() < args.limit && itr->parent_author == parent_author )
    {
       result.discussions.push_back( discussion( *itr, _db ) );
       set_pending_payout( result.discussions.back() );
+	  //获取这条评论的投票信息
       result.discussions.back().active_votes = get_active_votes( get_active_votes_args( { itr->author, chain::to_string( itr->permlink ) } ) ).votes;
       ++itr;
    }
@@ -533,7 +542,7 @@ DEFINE_API_IMPL( tags_api_impl, get_active_votes )
    }
    return result;
 }
-
+//设置将显示的帖子价值（待领取赏金）
 void tags_api_impl::set_pending_payout( discussion& d )
 {
    const auto& cidx = _db.get_index< tags::tag_index, tags::by_comment>();
@@ -628,6 +637,10 @@ discussion_query_result tags_api_impl::get_discussions( const discussion_query& 
 {
    discussion_query_result result;
 
+   for ( auto itr = tidx_itr; itr != tidx.end() && itr->tag == tag; itr++ )
+	  ++result.total_post_counts;
+   
+   ilog("debug for total_post_counts: count---${count}", ("count", result.total_post_counts));
    const auto& cidx = _db.get_index< tags::tag_index, tags::by_comment >();
    chain::comment_id_type start;
 
@@ -651,7 +664,7 @@ discussion_query_result tags_api_impl::get_discussions( const discussion_query& 
    uint64_t filter_count = 0;
    uint64_t exc_count = 0;
    uint64_t max_itr_count = 10 * query.limit;
-   while( count > 0 && tidx_itr != tidx.end() )
+   while( count > 0 && tidx_itr != tidx.end() )//find in tag_index
    {
       ++itr_count;
       if( itr_count > max_itr_count )

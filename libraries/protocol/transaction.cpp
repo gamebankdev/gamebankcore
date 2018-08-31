@@ -94,7 +94,7 @@ void transaction::get_required_authorities( flat_set< account_name_type >& activ
                                             flat_set< account_name_type >& posting,		   //操作所需的posting授权账号
                                             vector< authority >& other )const
 {
-//得到需要的认证key
+//得到交易所需要的相关账户
    for( const auto& op : operations )
       operation_get_required_authorities( op, active, owner, posting, other );
 }
@@ -191,8 +191,8 @@ set<public_key_type> signed_transaction::get_required_signatures(
 }
 
 set<public_key_type> signed_transaction::minimize_required_signatures(
-   const chain_id_type& chain_id,							//区块链id
-   const flat_set< public_key_type >& available_keys,		//钱包中存在的权限公钥许可
+   const chain_id_type& chain_id,							
+   const flat_set< public_key_type >& available_keys,		
 
    //typedef std::function<authority(const string&)> authority_getter;
    const authority_getter& get_active,

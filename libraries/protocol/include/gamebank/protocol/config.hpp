@@ -7,30 +7,29 @@
 
 #ifdef IS_TEST_NET
 #define GAMEBANK_BLOCKCHAIN_VERSION              ( version(0, 1, 0) )
-
-#define GAMEBANK_INIT_PRIVATE_KEY                (fc::ecc::private_key::regenerate(fc::sha256::hash(std::string("init_key"))))
-#define GAMEBANK_INIT_PUBLIC_KEY_STR             (std::string( gamebank::protocol::public_key_type(GAMEBANK_INIT_PRIVATE_KEY.get_public_key()) ))
+#define GAMEBANK_INIT_PUBLIC_KEY_STR             "TST6MH4Q1JbHp2AYmBpuux6nAbiQEW4nyunbVAdHpgWPoYPushxCo"
 #define GAMEBANK_CHAIN_ID_NAME "testnet"
 #define GAMEBANK_CHAIN_ID (fc::sha256::hash(GAMEBANK_CHAIN_ID_NAME))
 #define GAMEBANK_ADDRESS_PREFIX                  "TST"
 
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1451606400))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1451606400))
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60) /// 1 hr
+#define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60*24*7) /// 7 days
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD (GAMEBANK_CASHOUT_WINDOW_SECONDS)
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*3) /// 3 days
 #define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24) /// 1 day
 #define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::minutes(5))
 
 
-#define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          0
+#define GAMEBANK_MIN_ACCOUNT_CREATION_FEE          (int64_t( 10000 ) * int64_t( 1000 ))			//percision 10^3
 
 #define GAMEBANK_OWNER_AUTH_RECOVERY_PERIOD                  fc::seconds(60)
 #define GAMEBANK_ACCOUNT_RECOVERY_REQUEST_EXPIRATION_PERIOD  fc::seconds(12)
 #define GAMEBANK_OWNER_UPDATE_LIMIT                          fc::seconds(0)
 #define GAMEBANK_OWNER_AUTH_HISTORY_TRACKING_START_BLOCK_NUM 1
 
-#define GAMEBANK_INIT_SUPPLY                     (int64_t( 250 ) * int64_t( 1000000 ) * int64_t( 1000 ))
+#define GAMEBANK_INIT_SUPPLY                     (int64_t( 5000 ) * int64_t( 1000000 ) * int64_t( 1000 ))//5 billion, percision 10^3
+#define GAMEBANK_INIT_VESTING_SUPPLY_PERCENT	 (10 * GAMEBANK_1_PERCENT) 
 
 /// Allows to limit number of total produced blocks.
 #define TESTNET_BLOCK_LIMIT                   (3000000)
@@ -39,10 +38,10 @@
 
 #define GAMEBANK_BLOCKCHAIN_VERSION              ( version(0, 0, 1) )
 
-#define GAMEBANK_INIT_PUBLIC_KEY_STR             "GBK8GC13uCZbP44HzMLV6zPZGwVQ8Nt4Kji8PapsPiNq1BK153XTX"
+#define GAMEBANK_INIT_PUBLIC_KEY_STR             "TST6MH4Q1JbHp2AYmBpuux6nAbiQEW4nyunbVAdHpgWPoYPushxCo"
 #define GAMEBANK_CHAIN_ID_NAME ""
 #define GAMEBANK_CHAIN_ID fc::sha256()
-#define GAMEBANK_ADDRESS_PREFIX                  "GBK"
+#define GAMEBANK_ADDRESS_PREFIX                  "TST"
 
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1458835200))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1458838800))

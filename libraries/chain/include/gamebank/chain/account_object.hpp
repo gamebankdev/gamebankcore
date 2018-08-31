@@ -44,7 +44,7 @@ namespace gamebank { namespace chain {
          time_point_sec    last_account_recovery;
          uint32_t          comment_count = 0;
          uint32_t          lifetime_vote_count = 0;
-         uint32_t          post_count = 0;
+         uint32_t          post_count = 0;		//post and comment
 
          bool              can_vote = true;
          uint16_t          voting_power = GAMEBANK_100_PERCENT;   ///< current voting power of this account, it falls after every vote
@@ -311,12 +311,21 @@ namespace gamebank { namespace chain {
    > account_authority_index;
 
    struct by_delegation;
+   struct by_delegation_time;
 
    typedef multi_index_container <
       vesting_delegation_object,
       indexed_by <
          ordered_unique< tag< by_id >,
             member< vesting_delegation_object, vesting_delegation_id_type, &vesting_delegation_object::id > >,
+		ordered_unique< tag< by_delegation_time >,
+			composite_key< vesting_delegation_object,
+				member< vesting_delegation_object, account_name_type, &vesting_delegation_object::delegator >,
+				member< vesting_delegation_object, time_point_sec, &vesting_delegation_object::min_delegation_time >,
+				member< vesting_delegation_object, vesting_delegation_id_type, &vesting_delegation_object::id >
+			>,
+			composite_key_compare< std::less< account_name_type >, std::less< time_point_sec >, std::less< vesting_delegation_id_type > >
+		>,
          ordered_unique< tag< by_delegation >,
             composite_key< vesting_delegation_object,
                member< vesting_delegation_object, account_name_type, &vesting_delegation_object::delegator >,

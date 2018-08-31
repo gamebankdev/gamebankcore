@@ -103,6 +103,7 @@ namespace fc { namespace rpc {
                            auto pmi = _methods.find(m->value().as_string());
                            if( pmi != _methods.end()  )
                            {
+							   //call method
                                result = pmi->second( p->value().get_array() );
                            }
                            else // invalid method / param combo
@@ -117,6 +118,7 @@ namespace fc { namespace rpc {
                            auto nmi = _named_param_methods.find(m->value().as_string());
                            if( nmi != _named_param_methods.end() )
                            {
+							   //call method
                                result = nmi->second( p->value().get_object() );
                            }
                            else // invalid method / param combo?

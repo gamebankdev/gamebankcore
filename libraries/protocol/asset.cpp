@@ -354,10 +354,6 @@ DEFINE_PRICE_COMPARISON_OPERATOR( >= )
       {
          if( a.symbol == b.base.symbol )
          {
-         //such as
-         //asset: 10个GBD
-         //price: base=1GBD;quote=10GBC
-         //asset * price： 表示10个GBD总共可兑换的GBC资产--10*10/1 = 100GBC
             FC_ASSERT( b.base.amount.value > 0 );
             uint128_t result = (uint128_t(a.amount.value) * b.quote.amount.value)/b.base.amount.value;
             FC_ASSERT( result.hi == 0 );
@@ -365,7 +361,6 @@ DEFINE_PRICE_COMPARISON_OPERATOR( >= )
          }
          else if( a.symbol == b.quote.symbol )
          {
-         //such as
             FC_ASSERT( b.quote.amount.value > 0 );
             uint128_t result = (uint128_t(a.amount.value) * b.base.amount.value)/b.quote.amount.value;
             FC_ASSERT( result.hi == 0 );

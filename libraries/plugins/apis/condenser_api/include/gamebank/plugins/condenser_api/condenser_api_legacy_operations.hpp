@@ -210,6 +210,7 @@ namespace gamebank { namespace plugins { namespace condenser_api {
          }
       }
 
+	  //implicit cast from legacy_ to comment_
       operator comment_options_operation()const
       {
          comment_options_operation op;
