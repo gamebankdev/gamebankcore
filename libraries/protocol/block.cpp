@@ -67,4 +67,19 @@ namespace gamebank { namespace protocol {
       return checksum_type::hash( ids[0] );
    }
 
+   uint32_t signed_contract::num_from_id(const block_id_type& id)
+   {
+       return fc::endian_reverse_u32(id._hash[0]);
+   }
+
+   block_id_type signed_contract::id()const
+   {
+       auto tmp = fc::sha224::hash(*this);
+       tmp._hash[0] = fc::endian_reverse_u32(block_num()); // store the block num in the ID, 160 bits is plenty for the hash
+       static_assert(sizeof(tmp._hash[0]) == 4, "should be 4 bytes");
+       block_id_type result;
+       memcpy(result._hash, tmp._hash, std::min(sizeof(result), sizeof(tmp)));
+       return result;
+   }
+
 } } // gamebank::protocol

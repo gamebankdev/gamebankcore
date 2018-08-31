@@ -82,28 +82,27 @@ static int contract_get_user_data(lua_State *L) {
 
 static int contract_transfer(lua_State *L) {
 	int n = lua_gettop(L);  /* number of arguments */
-	if (n != 3)
+	if (n != 1)
 	{
-		luaL_error(L, "expected 3 argument" );
+		luaL_error(L, "expected 1 argument" );
 		return 0;
 	}
-	luaL_argcheck(L, lua_isstring(L, 1), 1, "string expected");
-	luaL_argcheck(L, lua_isstring(L, 2), 2, "string expected");
-	luaL_argcheck(L, lua_isinteger(L, 3), 3, "integer expected");
-	const char* from_account = lua_tostring(L, 1);
-	const char* to_account = lua_tostring(L, 2);
-	lua_Integer num = lua_tointeger(L, 3);
-	if (strcmp(L->extend.caller_name, from_account) != 0) {
-		luaL_error(L, "only the contract caller can call transfer");
-		return 0;
-	}
-	account_name_type from = from_account;
-	account_name_type to = to_account;
+	luaL_argcheck(L, lua_isinteger(L, 1), 1, "integer expected");
+	lua_Integer num = lua_tointeger(L, 1);
+
+	account_name_type from = L->extend.caller_name;
+	account_name_type to = L->extend.contract_name;
 	asset amount(num, GBC_SYMBOL);
 	chain::database* db = (chain::database*)(L->extend.pointer);
 	FC_ASSERT(db->get_balance(from, amount.symbol) >= amount, "Account does not have sufficient funds for transfer.");
 	db->adjust_balance(from, -amount);
 	db->adjust_balance(to, amount);
+
+    transfer_operation tsf;
+    tsf.from = from;
+    tsf.to = to;
+    tsf.amount = amount;
+    db->contract_operation(tsf);
 	return 0;
 }
 

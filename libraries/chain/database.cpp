@@ -121,6 +121,7 @@ void database::open( const open_args& args )
       _benchmark_dumper.set_enabled( args.benchmark_is_enabled );
 
       _block_log.open( args.data_dir / "block_log" );
+      _contract_log.open( args.data_dir / "contract_log" );
 
       auto log_head = _block_log.head();
 
@@ -272,6 +273,7 @@ void database::close(bool rewind)
       chainbase::database::close();
 
       _block_log.close();
+      _contract_log.close();
 
       _fork_db.reset();
    }
@@ -3093,7 +3095,12 @@ void database::_apply_block( const signed_block& next_block )
          "Block produced by witness that is not running current hardfork",
          ("witness",witness)("next_block.witness",next_block.witness)("hardfork_state", hardfork_state)
       );
-
+    
+    //合约交易日志
+   vector<contract_transaction> ctxs;
+   signed_contract sc;
+   sc.previous = next_block.previous;
+   _contract_operation.clear();
    //apply区块中的所有交易
    for( const auto& trx : next_block.transactions )
    {
@@ -3105,7 +3112,13 @@ void database::_apply_block( const signed_block& next_block )
        */
       apply_transaction( trx, skip );
       ++_current_trx_in_block;
+      contract_transaction ctx;
+      ctx.ref_block_num = trx.ref_block_num;
+      ctx.ref_block_prefix = trx.ref_block_prefix;
+      ctx.operations.swap( _contract_operation );
+      sc.transactions.push_back(ctx);
    }
+   _contract_block[next_block.block_num()] = sc;
 
    _current_trx_in_block = -1;
    _current_op_in_trx = 0;
@@ -3857,9 +3870,17 @@ void database::update_last_irreversible_block()
             FC_ASSERT( block, "Current fork in the fork database does not contain the last_irreversible_block" );
             _block_log.append( block->data );
             log_head_num++;
+
+            auto itr = _contract_block.find( block->data.block_num() );
+            if (itr != _contract_block.end() )
+            {
+               _contract_log.append( itr->second );
+               _contract_block.erase( itr );
+            }
          }
 
          _block_log.flush(); // 区块数据持久化
+         _contract_log.flush();
       }
    }
 

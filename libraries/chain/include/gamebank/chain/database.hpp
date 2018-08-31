@@ -3,6 +3,7 @@
  */
 #pragma once
 #include <gamebank/chain/block_log.hpp>
+#include <gamebank/chain/contract_log.hpp>
 #include <gamebank/chain/block_notification.hpp>
 #include <gamebank/chain/fork_database.hpp>
 #include <gamebank/chain/global_property_object.hpp>
@@ -462,6 +463,8 @@ namespace gamebank { namespace chain {
          void set_flush_interval( uint32_t flush_blocks );
          void check_free_memory( bool force_print, uint32_t current_block_num );
 
+         void contract_operation( const operation &op ) { _contract_operation.push_back(op); }
+
 #ifdef IS_TEST_NET
          bool liquidity_rewards_enabled = true;
          bool skip_price_feed_limit_check = true;
@@ -518,6 +521,10 @@ namespace gamebank { namespace chain {
          protocol::hardfork_version    _hardfork_versions[ GAMEBANK_NUM_HARDFORKS + 1 ];
 
          block_log                     _block_log;
+         contract_log                  _contract_log;
+
+         vector<operation>                        _contract_operation;
+         flat_map<uint64_t, signed_contract>      _contract_block;
 
          // this function needs access to _plugin_index_signal
          template< typename MultiIndexType >

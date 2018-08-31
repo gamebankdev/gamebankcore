@@ -14,6 +14,7 @@ add_library( gamebank_chain
 
              shared_authority.cpp
              block_log.cpp
+             contract_log.cpp
 
              generic_custom_operation_interpreter.cpp
 
