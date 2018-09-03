@@ -3150,7 +3150,7 @@ void database::_apply_block( const signed_block& next_block )
    //更新历史喂价中间值，用于确定GBD->GBC的汇率（每小时更新一次）
    update_median_feed();
 
-   //更新系统STEE总量价值，根据债务所有权比率，确定sbd_print_rate
+   //更新系统GBC总量价值，根据债务所有权比率，确定sbd_print_rate
    update_virtual_supply();
 
    clear_null_account_balance();
