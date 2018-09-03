@@ -87,25 +87,51 @@ static int contract_get_user_data(lua_State *L) {
 }
 
 static int contract_transfer(lua_State *L) {
-	int n = lua_gettop(L);  /* number of arguments */
-	if (n != 1)
-	{
-		luaL_error(L, "expected 1 argument" );
-		return 0;
-	}
-	luaL_argcheck(L, lua_isinteger(L, 1), 1, "integer expected");
-	lua_Integer num = lua_tointeger(L, 1);
+    int n = lua_gettop(L);  /* number of arguments */
+    if (n != 3)
+    {
+        luaL_error(L, "expected 3 argument");
+        return 0;
+    }
+    luaL_argcheck(L, lua_isstring(L, 1), 1, "string expected");
+    luaL_argcheck(L, lua_isstring(L, 2), 2, "string expected");
+    luaL_argcheck(L, lua_isinteger(L, 3), 3, "integer expected");
+    const char* from_account = lua_tostring(L, 1);
+    const char* to_account = lua_tostring(L, 2);
+    lua_Integer num = lua_tointeger(L, 3);
 
-	account_name_type from = L->extend.caller_name;
-	account_name_type to = L->extend.contract_name;
-	asset amount(num, GBC_SYMBOL);
-	chain::database* db = (chain::database*)(L->extend.pointer);
-	if (!(db->get_balance(from, amount.symbol) >= amount)) {
-		luaL_error(L, "Account does not have sufficient funds for transfer");
-		return 0;
-	}
-	db->adjust_balance(from, -amount);
-	db->adjust_balance(to, amount);
+    account_name_type from = from_account;
+    account_name_type to = to_account;
+    asset amount(num, GBC_SYMBOL);
+    chain::database* db = (chain::database*)(L->extend.pointer);
+
+    bool from_caller;
+    if (strcmp(L->extend.caller_name, from_account) == 0) {
+        if (db->get_balance(from, amount.symbol) < amount) {
+            luaL_error(L, "Account does not have sufficient funds for transfer");
+            return 0;
+        }
+        from_caller = true;
+    }
+    else if (strcmp(L->extend.contract_name, from_account) == 0) {
+        if (db->get_contract_balance(from, amount.symbol) < amount) {
+            luaL_error(L, "Account does not have sufficient funds for transfer");
+            return 0;
+        }
+        from_caller = false;
+    }
+    else {
+        luaL_error(L, "only the contract caller or owner can call transfer");
+        return 0;
+    }
+    if (from_caller) {
+        db->adjust_balance(from, -amount);
+        db->adjust_contract_balance(to, amount);
+    }
+    else {
+        db->adjust_contract_balance(from, -amount);
+        db->adjust_balance(to, amount);
+    }
 
     transfer_operation tsf;
     tsf.from = from;

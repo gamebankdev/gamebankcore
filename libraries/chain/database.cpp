@@ -4358,6 +4358,24 @@ void database::adjust_savings_balance( const account_object& a, const asset& del
    } );
 }
 
+void database::adjust_contract_balance( const account_name_type& name, const asset& delta )
+{
+   const auto& a = get< contract_object, by_name >(name);
+
+   modify(a, [&](contract_object& cot)
+   {
+      switch (delta.symbol.asset_num)
+      {
+         case GAMEBANK_ASSET_NUM_GBC:
+             cot.balance += delta;
+            break;
+         default:
+            FC_ASSERT(!"invalid symbol");
+            break;
+      }
+   });
+}
+
 void database::adjust_reward_balance( const account_object& a, const asset& value_delta,
                                       const asset& share_delta /*= asset(0,GBS_SYMBOL)*/ )
 {
@@ -4439,6 +4457,18 @@ asset database::get_savings_balance( const account_object& a, asset_symbol_type 
          return a.savings_balance;
       case GAMEBANK_ASSET_NUM_GBD:
          return a.savings_gbd_balance;
+      default: 
+         FC_ASSERT( !"invalid symbol" );
+   }
+}
+
+asset database::get_contract_balance( const string& aname, asset_symbol_type symbol )const
+{
+   const auto& a = get< contract_object, by_name >(aname);
+   switch( symbol.asset_num )
+   {
+      case GAMEBANK_ASSET_NUM_GBC:
+         return a.balance;
       default: 
          FC_ASSERT( !"invalid symbol" );
    }

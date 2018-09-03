@@ -1145,6 +1145,7 @@ class wallet_api
 
        condenser_api::legacy_signed_transaction contract_deploy_file(
            string creator,
+           string contract_name,
            string code_file,
            string abi_file,
            bool broadcast);

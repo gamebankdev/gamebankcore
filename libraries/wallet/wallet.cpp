@@ -2638,7 +2638,7 @@ condenser_api::legacy_signed_transaction wallet_api::contract_deploy(string crea
     return my->sign_transaction(tx, broadcast);
 }
 
-condenser_api::legacy_signed_transaction wallet_api::contract_deploy_file(string creator, string code_file, string abi_file, bool broadcast)
+condenser_api::legacy_signed_transaction wallet_api::contract_deploy_file(string creator, string contract_name, string code_file, string abi_file, bool broadcast)
 {
     FC_ASSERT(!is_locked());
 
@@ -2659,6 +2659,7 @@ condenser_api::legacy_signed_transaction wallet_api::contract_deploy_file(string
 
     contract_deploy_operation op;
     op.creator = creator;
+    op.name = contract_name;
     op.code = code;
     op.abi = abi;
 

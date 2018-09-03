@@ -345,6 +345,7 @@ namespace gamebank { namespace chain {
          void        adjust_balance( const account_object& a, const asset& delta );
          void        adjust_balance( const account_name_type& name, const asset& delta );
          void        adjust_savings_balance( const account_object& a, const asset& delta );
+         void        adjust_contract_balance( const account_name_type& name, const asset& delta );
          void        adjust_reward_balance( const account_object& a, const asset& value_delta,
                                             const asset& share_delta = asset(0,GBS_SYMBOL) );
          void        adjust_reward_balance( const account_name_type& name, const asset& value_delta,
@@ -355,6 +356,7 @@ namespace gamebank { namespace chain {
 
          asset       get_balance( const account_object& a, asset_symbol_type symbol )const;
          asset       get_savings_balance( const account_object& a, asset_symbol_type symbol )const;
+         asset       get_contract_balance( const string& aname, asset_symbol_type symbol )const;
          asset       get_balance( const string& aname, asset_symbol_type symbol )const { return get_balance( get_account(aname), symbol ); }
 
          /** this updates the votes for witnesses as a result of account voting proxy changing */
