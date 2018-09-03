@@ -1056,6 +1056,7 @@ namespace gamebank { namespace protocol {
    struct contract_deploy_operation : public base_operation
    {
 	   account_name_type creator;
+       account_name_type name;
 	   string            code;
 	   string            abi;
 

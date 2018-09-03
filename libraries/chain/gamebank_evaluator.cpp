@@ -2420,10 +2420,10 @@ void nonfungible_fund_buy_evaluator::do_apply( const nonfungible_fund_buy_operat
 void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 {
 	try {
-		//const auto& creator = _db.get_account(op.creator);
-		auto contract_data = _db.find<contract_object, by_name>(op.creator);
-		FC_ASSERT(contract_data == nullptr, "has exist contract");
-
+        const auto acc_obj = _db.find<account_object, by_name>(op.name);
+        FC_ASSERT( acc_obj == nullptr, "has exist account" );
+        const auto con_obj = _db.find<contract_object, by_name>(op.name);
+        FC_ASSERT( con_obj == nullptr, "has exist contract");
         // check abi
         fc::variant abiv = fc::json::from_string(op.abi);
         FC_ASSERT(abiv.is_array(), "op abi not array");
@@ -2466,6 +2466,7 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		_db.create<contract_object>([&](contract_object& obj)
 		{
 			obj.creator = op.creator;
+			obj.name = op.name;
 			from_string(obj.code, op.code);
 			from_string(obj.abi, op.abi);
 			// version calc
