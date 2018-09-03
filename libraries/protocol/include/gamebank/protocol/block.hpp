@@ -22,4 +22,4 @@ namespace gamebank { namespace protocol {
 } } // gamebank::protocol
 
 FC_REFLECT_DERIVED( gamebank::protocol::signed_block, (gamebank::protocol::signed_block_header), (transactions) )
-FC_REFLECT( gamebank::protocol::signed_contract, (previous),(transactions) )
+FC_REFLECT( gamebank::protocol::signed_contract, (previous)(transactions) )
