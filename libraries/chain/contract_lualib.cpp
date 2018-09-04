@@ -107,10 +107,13 @@ static int contract_transfer(lua_State *L) {
     chain::database* db = (chain::database*)(L->extend.pointer);
 
     bool from_caller = false;
-	bool to_contract = false;
     if (strcmp(L->extend.caller_name, from_account) == 0) {
         if (db->get_balance(from, amount.symbol) < amount) {
             luaL_error(L, "Account does not have sufficient funds for transfer");
+            return 0;
+        }
+        if (strcmp(L->extend.contract_name, to_account) != 0) {
+            luaL_error(L, "caller can only tranfer GBC to the current contract");
             return 0;
         }
         from_caller = true;
@@ -128,10 +131,6 @@ static int contract_transfer(lua_State *L) {
     }
 	
     if (from_caller) {
-		if (strcmp(L->extend.contract_name, to_account) != 0) {
-			luaL_error(L, "caller can only tranfer GBC to the current contract");
-			return 0;
-		}
         db->adjust_balance(from, -amount);
 		db->adjust_contract_balance(to, amount);
         

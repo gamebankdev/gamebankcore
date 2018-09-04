@@ -494,13 +494,23 @@ const account_object* database::find_account( const account_name_type& name )con
 
 const crowdfunding_object& database::get_crowdfunding( const account_name_type& originator, const shared_string& permlink )const
 { try {
-        return get< crowdfunding_object, by_permlink >(boost::make_tuple(originator, permlink));
+   return get< crowdfunding_object, by_permlink >(boost::make_tuple(originator, permlink));
 } FC_CAPTURE_AND_RETHROW( (originator)(permlink) ) }
 
 
 const crowdfunding_object* database::find_crowdfunding( const account_name_type& originator, const shared_string& permlink )const
 {
     return find< crowdfunding_object, by_permlink >(boost::make_tuple(originator, permlink));
+}
+
+const contract_object& database::get_contract( const account_name_type& name )const
+{ try {
+   return get< contract_object, by_name >(name);
+} FC_CAPTURE_AND_RETHROW((name)) }
+
+const contract_object* database::find_contract( const account_name_type& name )const
+{
+    return find< contract_object, by_name >(name);
 }
 
 const comment_object& database::get_comment( const account_name_type& author, const shared_string& permlink )const
@@ -4360,7 +4370,7 @@ void database::adjust_savings_balance( const account_object& a, const asset& del
 
 void database::adjust_contract_balance( const account_name_type& name, const asset& delta )
 {
-   const auto& a = get< contract_object, by_name >(name);
+   const auto& a = get_contract(name);
 
    modify(a, [&](contract_object& cot)
    {
@@ -4464,7 +4474,7 @@ asset database::get_savings_balance( const account_object& a, asset_symbol_type 
 
 asset database::get_contract_balance( const string& aname, asset_symbol_type symbol )const
 {
-   const auto& a = get< contract_object, by_name >(aname);
+   const auto& a = get_contract(aname);
    switch( symbol.asset_num )
    {
       case GAMEBANK_ASSET_NUM_GBC:

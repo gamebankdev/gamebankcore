@@ -183,6 +183,9 @@ namespace gamebank { namespace chain {
          const crowdfunding_object&  get_crowdfunding(const account_name_type& originator, const shared_string& permlink)const;
          const crowdfunding_object*  find_crowdfunding(const account_name_type& originator, const shared_string& permlink)const;
 
+         const contract_object&  get_contract( const account_name_type& name )const;
+         const contract_object*  find_contract( const account_name_type& name )const;
+
          const comment_object&  get_comment(  const account_name_type& author, const shared_string& permlink )const;
          const comment_object*  find_comment( const account_name_type& author, const shared_string& permlink )const;
 

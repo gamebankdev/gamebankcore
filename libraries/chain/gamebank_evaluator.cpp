@@ -2420,9 +2420,9 @@ void nonfungible_fund_buy_evaluator::do_apply( const nonfungible_fund_buy_operat
 void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 {
 	try {
-        const auto acc_obj = _db.find<account_object, by_name>(op.name);
+        const auto acc_obj = _db.find_account(op.name);
         FC_ASSERT( acc_obj == nullptr, "has exist account" );
-        const auto con_obj = _db.find<contract_object, by_name>(op.name);
+        const auto con_obj = _db.find_contract(op.name);
         FC_ASSERT( con_obj == nullptr, "has exist contract");
         // check abi
         fc::variant abiv = fc::json::from_string(op.abi);
@@ -2513,7 +2513,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
         return false;
     };
 	try {
-		const auto& contract_data = _db.get<contract_object, by_name>(op.contract_name);
+		const auto& contract_data = _db.get_contract(op.contract_name);
 
         fc::variant v = fc::json::from_string(op.args);
         FC_ASSERT(v.is_array(), "contract args not array");
