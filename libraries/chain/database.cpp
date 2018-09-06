@@ -3661,9 +3661,6 @@ void database::update_virtual_supply()
    });
 } FC_CAPTURE_AND_RETHROW() }
 
-//called by _apply_block
-//signing_witness:区块生产者
-//new_block: 新生产的区块
 void database::update_signing_witness(const witness_object& signing_witness, const signed_block& new_block)
 { try {
    if(signing_witness.last_confirmed_block_num > new_block.block_num() )
@@ -3709,8 +3706,6 @@ void database::update_last_irreversible_block()
 
    /**
     * Prior to voting taking over, we must be more conservative...
-    * 每一轮21个见证人最多生成21个区块，这里保守的确定将上一轮生成的最后一个区块做持久化
-    * 而不是立即持久化最新生成的区块
     */
    if( head_block_num() < GAMEBANK_START_MINER_VOTING_BLOCK )
    {
@@ -3718,7 +3713,7 @@ void database::update_last_irreversible_block()
       modify( dpo, [&]( dynamic_global_property_object& _dpo )
       {
          if ( head_block_num() > GAMEBANK_MAX_WITNESSES )
-			//每一轮21个见证人最多生成21个区块，这里保守的确定将上一轮生成的最后一个区块做持久化
+			//每一轮21个见证人最多生成21个区块，固化直到区块编号为(当前区块-21)的区块
             _dpo.last_irreversible_block_num = head_block_num() - GAMEBANK_MAX_WITNESSES;
       } );
    }
@@ -3738,7 +3733,7 @@ void database::update_last_irreversible_block()
       // 1 1 1 1 1 1 1 2 2 2 -> 1
       // 3 3 3 3 3 3 3 3 3 3 -> 3
 
-		//4分之一 size
+		//25% of witnesses
       size_t offset = ((GAMEBANK_100_PERCENT - GAMEBANK_IRREVERSIBLE_THRESHOLD) * wit_objs.size() / GAMEBANK_100_PERCENT);
 
 	  // [begin,offset) < offset < (offset,end)//offset的左边所有见证人的最新生产的区块编号均小于offset右边所有见证人最新生产的区块编号
