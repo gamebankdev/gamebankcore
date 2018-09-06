@@ -161,30 +161,30 @@ comment_metadata tags_plugin_impl::filter_tags( const comment_object& c, const c
 		  elog("exception e${e}", ("e", e));
       }
    } 
-   // We need to write the transformed tags into a temporary
-   // local container because we can't modify meta.tags concurrently
-   // as we iterate over it.
-   set< string > lower_tags;
-
-   uint8_t tag_limit = 5;
-   uint8_t count = 0;
-   for( const string& tag : meta.tags )
+  
+   //fetch game_name and remove from meta
+   if (meta.tags.size() > 1) 
    {
-      ++count;
-      if( count > tag_limit || lower_tags.size() > tag_limit )
-         break;
-      if( tag == "" )
-         continue;
-      lower_tags.insert( fc::to_lower( tag ) );
+	   auto itr = meta.tags.rbegin();
+	   string game_name = *itr;
+	   _db.modify(c, [&](comment_object &co)
+	   {
+		   from_string(co.game_name, game_name);
+	   });
+	   meta.tags.erase(game_name);
+	   ilog("the game name is ${name}", ("name", game_name));
+	   for (const string& tag : meta.tags)
+	   {
+		   ilog("the final tag is ${tag}", ("tag", tag));
+	   }
    }
-
+   
    /// the universal tag applies to everything safe for work or nsfw with a non-negative payout
-   if( c.net_rshares >= 0 )
+   /*if( c.net_rshares >= 0 )
    {
-      lower_tags.insert( string() ); /// add it to the universal tag
+	   game_id.insert( string() ); /// add it to the universal tag
    }
-
-   meta.tags = lower_tags; /// TODO: std::move???
+   */
 
    return meta;
 }
@@ -221,7 +221,7 @@ void tags_plugin_impl::create_tag( const string& tag, const comment_object& comm
 
    if( comment.parent_author.size() )
       parent = _db.get_comment( comment.parent_author, comment.parent_permlink ).id;
-   ilog("create new tag${t} for author_id${id}", ("t", tag)("id", author));
+   ilog("create new tag ${t} for author_id ${id}", ("t", tag)("id", author));
    const auto& tag_obj = _db.create<tag_object>( [&]( tag_object& obj )
    {
        obj.tag               = tag;
