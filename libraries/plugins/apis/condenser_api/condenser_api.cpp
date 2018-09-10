@@ -663,7 +663,8 @@ namespace detail
             {
                tags::discussion_query q;
                q.tag = tag;
-               q.limit = 20;
+               //q.limit = 20;
+               q.limit = 10;
                q.truncate_body = 0;
 			   auto discussion_result = _tags_api->get_discussions_by_created(q);
 			   auto created_disc = discussion_result.discussions;
