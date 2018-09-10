@@ -745,7 +745,7 @@ struct state
    legacy_price                                       feed_price;
    string                                             error;
 
-   uint32_t											total_posts;
+   uint32_t											total_posts = 0;
 };
 
 struct scheduled_hardfork
