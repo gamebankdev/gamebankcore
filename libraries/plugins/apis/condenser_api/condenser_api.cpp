@@ -1509,7 +1509,12 @@ namespace detail
 	  _state.props = get_dynamic_global_properties({});
 	  set<string> accounts;
 	  tags::discussion_query q = args[0].as< tags::get_discussions_by_created_args >();
-      auto created_disc = _tags_api->get_discussions_by_created( q ).discussions;
+      
+	  auto discussion_result = _tags_api->get_discussions_by_created(q);
+	  auto created_disc = discussion_result.discussions;
+	  _state.total_posts = discussion_result.total_post_counts;
+	  
+	  ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
 	  auto& didx = _state.discussion_idx[q.tag];
       for( auto& d : created_disc)
       {
