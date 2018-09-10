@@ -13,13 +13,14 @@ namespace gamebank { namespace protocol {
    struct signed_contract
    {
        block_id_type                 previous;
+       block_id_type                 block_id;
        vector<contract_transaction>  transactions;
+       public_key_type               signing_key;
 
-       block_id_type                 id() const;
-       uint32_t                      block_num()const { return num_from_id(previous) + 1; }
-       static uint32_t num_from_id(const block_id_type& id);
+       block_id_type                 id()const { return block_id; }
+       uint32_t                      block_num()const;
    };
 } } // gamebank::protocol
 
 FC_REFLECT_DERIVED( gamebank::protocol::signed_block, (gamebank::protocol::signed_block_header), (transactions) )
-FC_REFLECT( gamebank::protocol::signed_contract, (previous)(transactions) )
+FC_REFLECT( gamebank::protocol::signed_contract, (previous)(block_id)(transactions)(signing_key))

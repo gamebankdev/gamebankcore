@@ -142,6 +142,81 @@ struct legacy_signed_block
    vector< transaction_id_type >       transaction_ids;
 };
 
+struct legacy_contract_transaction
+{
+    legacy_contract_transaction() {}
+
+    legacy_contract_transaction(const contract_transaction& t) :
+      ref_block_num(t.ref_block_num),
+      ref_block_prefix(t.ref_block_prefix)
+   {
+      for (const auto& o : t.operations)
+      {
+         legacy_operation op;
+         o.visit(legacy_operation_conversion_visitor(op));
+         operations.push_back(op);
+      }
+   }
+
+   operator contract_transaction()const
+   {
+      contract_transaction tx;
+      tx.ref_block_num = ref_block_num;
+      tx.ref_block_prefix = ref_block_prefix;
+
+      convert_from_legacy_operation_visitor v;
+      for (const auto& o : operations)
+      {
+         tx.operations.push_back(o.visit(v));
+      }
+
+      return tx;
+   }
+
+   uint16_t                   ref_block_num = 0;
+   uint32_t                   ref_block_prefix = 0;
+   vector< legacy_operation > operations;
+
+   transaction_id_type        transaction_id;
+   uint32_t                   block_num = 0;
+   uint32_t                   transaction_num = 0;
+};
+
+struct legacy_signed_contract
+{
+    legacy_signed_contract() {}
+    legacy_signed_contract( const block_api::api_signed_contract_object&  b) :
+       previous(b.previous),
+       block_id(b.block_id),
+       signing_key(b.signing_key)
+    {
+       for (const auto& t : b.transactions)
+       {
+          transactions.push_back(legacy_contract_transaction(t));
+       }
+
+       transaction_ids.insert(transaction_ids.end(), b.transaction_ids.begin(), b.transaction_ids.end());
+    }
+
+    operator signed_contract()const
+    {
+       signed_contract b;
+       b.previous = previous;
+       for (const auto& t : transactions)
+       {
+          b.transactions.push_back(contract_transaction(t));
+       }
+
+       return b;
+    }
+
+    block_id_type                         previous;
+    vector< legacy_contract_transaction > transactions;
+    block_id_type                         block_id;
+    public_key_type                       signing_key;
+    vector< transaction_id_type >         transaction_ids;
+};
+
 } } } // gamebank::plugins::condenser_api
 
 namespace fc {
@@ -156,3 +231,9 @@ FC_REFLECT( gamebank::plugins::condenser_api::legacy_signed_transaction,
 
 FC_REFLECT( gamebank::plugins::condenser_api::legacy_signed_block,
             (previous)(timestamp)(witness)(transaction_merkle_root)(extensions)(witness_signature)(transactions)(block_id)(signing_key)(transaction_ids) )
+
+FC_REFLECT( gamebank::plugins::condenser_api::legacy_contract_transaction,
+            (ref_block_num)(ref_block_prefix)(operations)(transaction_id)(block_num)(transaction_num) )
+
+FC_REFLECT( gamebank::plugins::condenser_api::legacy_signed_contract,
+            (previous)(transactions)(block_id)(signing_key)(transaction_ids))

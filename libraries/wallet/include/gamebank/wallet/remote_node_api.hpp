@@ -27,6 +27,7 @@ struct remote_node_api
    vector< account_name_type > get_active_witnesses();
    optional< block_header > get_block_header( uint32_t );
    optional< condenser_api::legacy_signed_block > get_block( uint32_t );
+   optional< condenser_api::legacy_signed_contract > get_contract(uint32_t);
    vector< condenser_api::api_operation_object > get_ops_in_block( uint32_t, bool only_virtual = true );
    fc::variant_object get_config();
    condenser_api::extended_dynamic_global_properties get_dynamic_global_properties();
@@ -123,6 +124,7 @@ FC_API( gamebank::wallet::remote_node_api,
         (get_active_witnesses)
         (get_block_header)
         (get_block)
+        (get_contract)
         (get_ops_in_block)
         (get_config)
         (get_dynamic_global_properties)

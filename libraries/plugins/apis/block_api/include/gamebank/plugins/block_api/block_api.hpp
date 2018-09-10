@@ -35,6 +35,13 @@ class block_api
          * @return the referenced block, or null if no matching block was found
          */
          (get_block)
+
+         /**
+         * @brief Retrieve a full, signed contract
+         * @param block_num Height Contract of the block to be returned
+         * @return 
+         */
+         (get_contract)
       )
 
    private:

@@ -369,6 +369,22 @@ optional<signed_block> database::fetch_block_by_number( uint32_t block_num )cons
    return b;
 } FC_LOG_AND_RETHROW() }
 
+optional<signed_contract> database::fetch_contract_by_id( const block_id_type& id )const
+{ try {
+   auto tmp = _contract_log.read_block_by_num(protocol::block_header::num_from_id(id));
+
+   if (tmp && tmp->id() == id)
+        return tmp;
+
+   tmp.reset();
+   return tmp;
+} FC_CAPTURE_AND_RETHROW() }
+
+optional<signed_contract> database::fetch_contract_by_number( uint32_t block_num )const
+{ try {
+   return _contract_log.read_block_by_num(block_num);
+} FC_LOG_AND_RETHROW() }
+
 //从transaction_index中提取交易，这个交易应该是有效的
 const signed_transaction database::get_recent_transaction( const transaction_id_type& trx_id ) const
 { try {
@@ -3113,6 +3129,8 @@ void database::_apply_block( const signed_block& next_block )
    vector<contract_transaction> ctxs;
    signed_contract sc;
    sc.previous = next_block.previous;
+   sc.block_id = next_block.id();
+   sc.signing_key = next_block.signee();
    _contract_operation.clear();
    //apply区块中的所有交易
    for( const auto& trx : next_block.transactions )

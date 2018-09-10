@@ -16,6 +16,7 @@ class block_api_impl
       DECLARE_API_IMPL(
          (get_block_header)
          (get_block)
+         (get_contract)
       )
 
       chain::database& _db;
@@ -68,9 +69,21 @@ DEFINE_API_IMPL( block_api_impl, get_block )
    return result;
 }
 
+DEFINE_API_IMPL( block_api_impl, get_contract )
+{
+   get_contract_return result;
+   auto contract = _db.fetch_contract_by_number(args.block_num);
+
+   if (contract)
+       result.contract = *contract;
+
+   return result;
+}
+
 DEFINE_READ_APIS( block_api,
    (get_block_header)
    (get_block)
+   (get_contract)
 )
 
 } } } // gamebank::plugins::block_api

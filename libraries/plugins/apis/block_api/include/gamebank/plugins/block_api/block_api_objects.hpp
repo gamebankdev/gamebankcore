@@ -30,10 +30,26 @@ struct api_signed_block_object : public signed_block
    vector< transaction_id_type > transaction_ids;
 };
 
+struct api_signed_contract_object : public signed_contract
+{
+   api_signed_contract_object(const signed_contract& contract) : signed_contract(contract) 
+   {
+      for (const signed_transaction& tx : transactions)
+         transaction_ids.push_back(tx.id());
+   }
+   api_signed_contract_object() {}
+
+   vector< transaction_id_type > transaction_ids;
+};
+
 } } } // gamebank::plugins::database_api
 
 FC_REFLECT_DERIVED( gamebank::plugins::block_api::api_signed_block_object, (gamebank::protocol::signed_block),
                      (block_id)
                      (signing_key)
+                     (transaction_ids)
+                  )
+
+FC_REFLECT_DERIVED( gamebank::plugins::block_api::api_signed_contract_object, (gamebank::protocol::signed_contract),
                      (transaction_ids)
                   )

@@ -32,6 +32,17 @@ struct get_block_return
    optional< api_signed_block_object > block;
 };
 
+/* get_contract */
+struct get_contract_args
+{
+    uint32_t block_num;
+};
+
+struct get_contract_return
+{
+   optional< api_signed_contract_object > contract;
+};
+
 } } } // gamebank::block_api
 
 FC_REFLECT( gamebank::plugins::block_api::get_block_header_args,
@@ -45,4 +56,10 @@ FC_REFLECT( gamebank::plugins::block_api::get_block_args,
 
 FC_REFLECT( gamebank::plugins::block_api::get_block_return,
    (block) )
+
+FC_REFLECT( gamebank::plugins::block_api::get_contract_args,
+   (block_num) )
+
+FC_REFLECT( gamebank::plugins::block_api::get_contract_return,
+   (contract) )
 
