@@ -957,6 +957,22 @@ struct api_nonfungible_fund_on_sale_object
       legacy_asset               selling_price;
 };
 
+struct api_contract_object
+{
+    api_contract_object(const contract_object& o) :
+        name( o.name ),
+        creator( o.creator ),
+        abi( to_string(o.abi) ),
+        created( o.created )
+    {}
+    api_contract_object() {};
+
+    string              name;
+    string              creator;
+    string              abi;
+    time_point_sec      created;
+};
+
 
 #define DEFINE_API_ARGS( api_name, arg_type, return_type )  \
 typedef arg_type api_name ## _args;                         \
@@ -1048,10 +1064,12 @@ DEFINE_API_ARGS( get_recent_trades,                      vector< variant >,   ve
 DEFINE_API_ARGS( get_market_history,                     vector< variant >,   vector< market_history::bucket_object > )
 DEFINE_API_ARGS( get_market_history_buckets,             vector< variant >,   flat_set< uint32_t > )
 DEFINE_API_ARGS( get_nonfungible_funds,                  vector< variant >,   vector< api_nonfungible_fund_object > )
-DEFINE_API_ARGS( get_nonfungible_funds_on_sale_by_seller,                      vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
-DEFINE_API_ARGS( get_nonfungible_fund_on_sale_by_fund_id,                      vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
-DEFINE_API_ARGS( get_nonfungible_funds_on_sale,                                    vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
-DEFINE_API_ARGS( get_nonfungible_funds_on_sale_by_expiration,                      vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
+DEFINE_API_ARGS( get_nonfungible_funds_on_sale_by_seller,                     vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
+DEFINE_API_ARGS( get_nonfungible_fund_on_sale_by_fund_id,                     vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
+DEFINE_API_ARGS( get_nonfungible_funds_on_sale,                               vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
+DEFINE_API_ARGS( get_nonfungible_funds_on_sale_by_expiration,                 vector< variant >,   vector< api_nonfungible_fund_on_sale_object > )
+DEFINE_API_ARGS( list_contracts,                         vector< variant >,   vector< string > )
+DEFINE_API_ARGS( find_contracts,                         vector< variant >,   api_contract_object )
 
 #undef DEFINE_API_ARGS
 
@@ -1153,6 +1171,8 @@ public:
 	  (get_nonfungible_fund_on_sale_by_fund_id)
 	  (get_nonfungible_funds_on_sale)
 	  (get_nonfungible_funds_on_sale_by_expiration)
+      (list_contracts)
+      (find_contracts)
    )
 
    private:
@@ -1346,4 +1366,7 @@ FC_REFLECT( gamebank::plugins::condenser_api::api_nonfungible_fund_object,
 
 FC_REFLECT( gamebank::plugins::condenser_api::api_nonfungible_fund_on_sale_object,
 		    (id)(fund_id)(created)(expiration)(seller)(selling_price) )
+
+FC_REFLECT( gamebank::plugins::condenser_api::api_contract_object,
+		    (name)(creator)(abi)(created) )
 

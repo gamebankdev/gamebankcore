@@ -139,6 +139,8 @@ namespace detail
 		    (get_nonfungible_fund_on_sale_by_fund_id)
 		    (get_nonfungible_funds_on_sale)
 		    (get_nonfungible_funds_on_sale_by_expiration)
+            (list_contracts)
+            (find_contracts)
          )
 
          void recursively_fetch_content( state& _state, tags::discussion& root, set<string>& referenced_accounts );
@@ -2158,6 +2160,35 @@ namespace detail
        LIMIT_GET_NONFUNGIBLE_FUNDS_ON_SALE_BY(expiration, begin, end);
    }
 
+   DEFINE_API_IMPL(condenser_api_impl, list_contracts)
+   {
+       CHECK_ARG_SIZE(2)
+       time_point_sec start = time_point_sec(args[0].as< uint32_t >());
+       int32_t limit = args[1].as< int32_t >();
+       limit = limit <= 1000 ? limit : 1000;
+
+       const auto& contract_idx = _db.get_index< chain::contract_object_index, chain::by_create_time >();
+       auto itr = contract_idx.lower_bound(start);
+       vector<string> result;
+       while (itr != contract_idx.end() && limit > 0)
+       {
+           result.push_back(itr->name);
+           ++itr;
+           --limit;
+       }
+       return result;
+   }
+
+   DEFINE_API_IMPL(condenser_api_impl, find_contracts)
+   {
+       CHECK_ARG_SIZE(1)
+       account_name_type name = args[0].as< account_name_type >();
+       auto contract = _db.find< chain::contract_object, chain::by_name >(name);
+       FC_ASSERT(contract != nullptr, "no such contract");
+
+       return *contract;
+   }
+
    #undef LIMIT_GET_NONFUNGIBLE_FUNDS_ON_SALE_BY
 
    /**
@@ -2477,6 +2508,8 @@ DEFINE_READ_APIS( condenser_api,
    (get_nonfungible_fund_on_sale_by_fund_id)
    (get_nonfungible_funds_on_sale)
    (get_nonfungible_funds_on_sale_by_expiration)
+   (list_contracts)
+   (find_contracts)
 )
 
 } } } // gamebank::plugins::condenser_api

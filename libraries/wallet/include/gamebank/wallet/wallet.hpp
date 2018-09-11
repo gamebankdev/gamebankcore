@@ -1139,6 +1139,7 @@ class wallet_api
 
        condenser_api::legacy_signed_transaction contract_deploy(
            string creator,
+           string contract_name,
            string code,
            string abi,
            bool broadcast);
@@ -1156,6 +1157,9 @@ class wallet_api
            string contract_method,
            string contract_args,
            bool broadcast);
+
+       vector< string > list_contracts(uint32_t start, uint32_t limit = 1000);
+       condenser_api::api_contract_object find_contracts(string name);
 };
 
 struct plain_keys {
@@ -1266,6 +1270,8 @@ FC_API( gamebank::wallet::wallet_api,
         (contract_deploy)
         (contract_deploy_file)
         (contract_call)
+        (list_contracts)
+        (find_contracts)
 
         /// helper api
         (get_prototype_operation)

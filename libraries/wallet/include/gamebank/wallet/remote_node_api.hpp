@@ -113,6 +113,8 @@ struct remote_node_api
    vector< condenser_api::api_nonfungible_fund_on_sale_object > get_nonfungible_fund_on_sale_by_fund_id(int64_t);
    vector< condenser_api::api_nonfungible_fund_on_sale_object > get_nonfungible_funds_on_sale( uint32_t);
    vector< condenser_api::api_nonfungible_fund_on_sale_object > get_nonfungible_funds_on_sale_by_expiration( uint32_t);
+   vector< string > list_contracts( uint32_t, uint32_t );
+   condenser_api::api_contract_object find_contracts( string );
 };
 
 } }
@@ -210,4 +212,6 @@ FC_API( gamebank::wallet::remote_node_api,
 	    (get_nonfungible_fund_on_sale_by_fund_id)
 	    (get_nonfungible_funds_on_sale)
 	    (get_nonfungible_funds_on_sale_by_expiration)
+        (list_contracts)
+        (find_contracts)
       )

@@ -454,5 +454,15 @@ vector< condenser_api::api_nonfungible_fund_on_sale_object > remote_node_api::ge
     FC_ASSERT(false);
 }
 
+vector< string > remote_node_api::list_contracts(uint32_t, uint32_t)
+{
+    FC_ASSERT(false);
+}
+
+condenser_api::api_contract_object remote_node_api::find_contracts(string)
+{
+    FC_ASSERT(false);
+}
+
 
 } }

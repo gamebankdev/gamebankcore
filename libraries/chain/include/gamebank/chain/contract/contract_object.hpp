@@ -36,6 +36,7 @@ public:
 
 typedef oid< contract_object > contract_object_id_type;
 
+struct by_create_time;
 /**
 	* @ingroup object_index
 	*/
@@ -43,7 +44,8 @@ typedef multi_index_container<
 	contract_object,
 	indexed_by<
 	ordered_unique< tag< by_id >, member< contract_object, contract_object_id_type, &contract_object::id > >,
-	ordered_unique< tag< by_name >, member< contract_object, account_name_type, &contract_object::name > >
+	ordered_unique< tag< by_name >, member< contract_object, account_name_type, &contract_object::name > >,
+    ordered_unique< tag< by_create_time >, member< contract_object, time_point_sec, &contract_object::created > >
 	>,
 	allocator< contract_object >
 > contract_object_index;

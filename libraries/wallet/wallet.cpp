@@ -2622,12 +2622,13 @@ vector< condenser_api::api_nonfungible_fund_on_sale_object > wallet_api::get_non
     return my->_remote_api->get_nonfungible_funds_on_sale_by_expiration(limit);
  }
 
-condenser_api::legacy_signed_transaction wallet_api::contract_deploy(string creator, string code, string abi, bool broadcast)
+condenser_api::legacy_signed_transaction wallet_api::contract_deploy(string creator, string contract_name, string code, string abi, bool broadcast)
 {
     FC_ASSERT(!is_locked());
 
     contract_deploy_operation op;
     op.creator = creator;
+    op.name = contract_name;
     op.code = code;
     op.abi = abi;
 
@@ -2685,6 +2686,22 @@ condenser_api::legacy_signed_transaction wallet_api::contract_call(string caller
     tx.validate();
 
     return my->sign_transaction(tx, broadcast);
+}
+
+vector< string > wallet_api::list_contracts(uint32_t start, uint32_t limit)
+{
+    FC_ASSERT(!is_locked());
+
+    FC_ASSERT(limit <= 1000);
+
+    return my->_remote_api->list_contracts(start, limit);
+}
+
+condenser_api::api_contract_object wallet_api::find_contracts(string name)
+{
+    FC_ASSERT(!is_locked());
+
+     return my->_remote_api->find_contracts(name);
 }
 
 } } // gamebank::wallet

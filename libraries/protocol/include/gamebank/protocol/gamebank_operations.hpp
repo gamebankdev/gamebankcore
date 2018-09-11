@@ -1185,6 +1185,6 @@ FC_REFLECT( gamebank::protocol::nonfungible_fund_put_up_for_sale_operation, (sel
 FC_REFLECT( gamebank::protocol::nonfungible_fund_withdraw_from_sale_operation, (seller)(fund_id) );
 FC_REFLECT( gamebank::protocol::nonfungible_fund_buy_operation, (buyer)(fund_id) );
 
-FC_REFLECT(gamebank::protocol::contract_deploy_operation, (creator)(code)(abi));
-FC_REFLECT(gamebank::protocol::contract_call_operation, (caller)(contract_name)(method)(args));
+FC_REFLECT( gamebank::protocol::contract_deploy_operation, (creator)(name)(code)(abi) );
+FC_REFLECT( gamebank::protocol::contract_call_operation, (caller)(contract_name)(method)(args) );
 

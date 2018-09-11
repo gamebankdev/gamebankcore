@@ -708,6 +708,7 @@ namespace gamebank { namespace protocol {
    void contract_deploy_operation::validate()const
    {
 	   validate_account_name(creator);
+       validate_account_name(name);
 	   FC_ASSERT(code.size() > 0, "code is empty");
 	   FC_ASSERT(code.size() < 1024*1024, "code larger than size limit");
 	   FC_ASSERT(abi.size() > 0, "abi is empty");
