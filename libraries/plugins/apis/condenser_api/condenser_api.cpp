@@ -2162,19 +2162,23 @@ namespace detail
 
    DEFINE_API_IMPL(condenser_api_impl, list_contracts)
    {
-       CHECK_ARG_SIZE(2)
-       time_point_sec start = time_point_sec(args[0].as< uint32_t >());
-       int32_t limit = args[1].as< int32_t >();
-       limit = limit <= 1000 ? limit : 1000;
+       //CHECK_ARG_SIZE(2)
+       //time_point_sec start = time_point_sec(args[0].as< uint32_t >());
+       //int32_t limit = args[1].as< int32_t >();
+       //limit = limit <= 1000 ? limit : 1000;
 
        const auto& contract_idx = _db.get_index< chain::contract_object_index, chain::by_create_time >();
-       auto itr = contract_idx.lower_bound(start);
+       //auto itr = contract_idx.lower_bound(start);
        vector<string> result;
-       while (itr != contract_idx.end() && limit > 0)
+       //while (itr != contract_idx.end() && limit > 0)
+       //{
+       //    result.push_back(itr->name);
+       //    ++itr;
+       //    --limit;
+       //}
+       for (auto itr = contract_idx.begin(); itr != contract_idx.end(); ++itr)
        {
            result.push_back(itr->name);
-           ++itr;
-           --limit;
        }
        return result;
    }
