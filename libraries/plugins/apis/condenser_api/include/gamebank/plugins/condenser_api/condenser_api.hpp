@@ -962,6 +962,7 @@ struct api_contract_object
     api_contract_object(const contract_object& o) :
         name( o.name ),
         creator( o.creator ),
+        code( to_string(o.code) ),
         abi( to_string(o.abi) ),
         created( o.created )
     {}
@@ -969,6 +970,7 @@ struct api_contract_object
 
     string              name;
     string              creator;
+    string              code;
     string              abi;
     time_point_sec      created;
 };
@@ -1368,5 +1370,5 @@ FC_REFLECT( gamebank::plugins::condenser_api::api_nonfungible_fund_on_sale_objec
 		    (id)(fund_id)(created)(expiration)(seller)(selling_price) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::api_contract_object,
-		    (name)(creator)(abi)(created) )
+		    (name)(creator)(code)(abi)(created) )
 
