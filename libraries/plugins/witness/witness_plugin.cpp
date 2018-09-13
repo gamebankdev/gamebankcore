@@ -442,6 +442,7 @@ namespace detail {
          fc::uint128 total_vshares( props.total_vesting_shares.amount.value );
          fc::uint128 account_average_bandwidth( band->average_bandwidth.value );
          fc::uint128 max_virtual_bandwidth( _db.get( reserve_ratio_id_type() ).max_virtual_bandwidth );
+/*
 #ifdef IS_TEST_NET
 		 if (type == forum) 
 		 {
@@ -460,6 +461,7 @@ namespace detail {
 			 ilog("----------------- DEBUG END --------------------------");
 		 }
 #endif
+*/
          has_bandwidth = ( account_vshares * max_virtual_bandwidth ) > ( account_average_bandwidth * total_vshares );
 
          if( _db.is_producing() )
