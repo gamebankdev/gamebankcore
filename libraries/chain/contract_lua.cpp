@@ -140,7 +140,7 @@ namespace gamebank { namespace chain {
 						if (proto->upvalues[b].name != nullptr) {
 							const char* upvalue_name = getstr(proto->upvalues[b].name);
 							if (is_global_var(upvalue_name)) {
-								elog("cant access global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
+								FC_ASSERT(false, "cant access global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
 								return false;
 							}
 						}
@@ -151,7 +151,7 @@ namespace gamebank { namespace chain {
 						if (proto->upvalues[b].name != nullptr) {
 							const char* upvalue_name = getstr(proto->upvalues[b].name);
 							if (is_global_var(upvalue_name)) {
-								elog("cant modify global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
+								FC_ASSERT(false, "cant modify global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
 								return false;
 							}
 						}
@@ -166,21 +166,21 @@ namespace gamebank { namespace chain {
 									int cidx = INDEXK(c);
 									const char* cname = getstr(tsvalue(&proto->k[cidx]));
 									if (is_global_var(cname)) {
-										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
+										FC_ASSERT(false, "cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
 									if (strcmp(cname, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME) == 0) {
-										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
+										FC_ASSERT(false, "cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
 									// check abi
 									if (!is_sys_function(cname) && !is_abi(cname)) {
-										elog("cant access global var: ${var} line:${line}", ("var", cname)("line", line));
+										FC_ASSERT(false, "cant access global var: ${var} line:${line}", ("var", cname)("line", line));
 										return false;
 									}
 								}
 								else {
-									elog("cant access global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
+									FC_ASSERT(false, "cant access global var: ${var} line:${line}", ("var", upvalue_name)("line", line));
 									return false;
 								}
 							}
@@ -196,22 +196,22 @@ namespace gamebank { namespace chain {
 									int bidx = INDEXK(b);
 									const char* bname = getstr(tsvalue(&proto->k[bidx]));
 									if (is_global_var(bname)) {
-										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
+										FC_ASSERT(false, "cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
 									if (strcmp(bname, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME) == 0) {
-										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
+										FC_ASSERT(false, "cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
 									// todo: how to determine RK(C) is a function?
 									// check abi
 									if ( !is_abi(bname)) {
-										elog("cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
+										FC_ASSERT(false, "cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
 										return false;
 									}
 								}
 								else {
-									elog("cant modify global var line:${line}", ("line", line));
+									FC_ASSERT(false, "cant modify global var line:${line}", ("line", line));
 									return false;
 								}
 							}
@@ -221,7 +221,7 @@ namespace gamebank { namespace chain {
 					case OP_CALL:
 					{
 						if (parent_proto == nullptr) {
-							elog("cant call method when load line:${line}", ("line", line));
+							FC_ASSERT(false, "cant call method when load line:${line}", ("line", line));
 							return false;
 						}
 					}
@@ -243,6 +243,7 @@ namespace gamebank { namespace chain {
 				{
 				case LUA_EXTEND_THROW:
 					elog("luaL_loadbuffer Error: ${err}", ("err", "LUA_EXTEND_THROW"));
+					FC_ASSERT(false, "contract compile error:{err}", ("err", "LUA_EXTEND_THROW"));
 					break;
 				case LUA_EXTEND_MEM_ERR:
 				{
@@ -252,12 +253,20 @@ namespace gamebank { namespace chain {
 						("err", "LUA_EXTEND_MEM_ERR")
 						("mem", mem_count)
 						("memlimit", L->extend.memory_limit));
+					FC_ASSERT(false, "contract compile error:${err} mem:${mem} memlimit:${memlimit}",
+						("err", "LUA_EXTEND_MEM_ERR")
+						("mem", mem_count)
+						("memlimit", L->extend.memory_limit));
 				}
 					break;
 				case LUA_EXTEND_OPCODE_ERR:
 					elog("luaL_loadbuffer Error: ${err} opcount:${opcount} oplimit:${oplimit}",
 						("err", "LUA_EXTEND_OPCODE_ERR")
 						("opcount",L->extend.current_opcode_execute_count)
+						("oplimit", L->extend.opcode_execute_limit));
+					FC_ASSERT(false, "contract compile error:${err} opcount:${opcount} oplimit:${oplimit}",
+						("err", "LUA_EXTEND_OPCODE_ERR")
+						("opcount", L->extend.current_opcode_execute_count)
 						("oplimit", L->extend.opcode_execute_limit));
 					break;
 				default:
@@ -283,12 +292,15 @@ namespace gamebank { namespace chain {
 						if (str != nullptr)
 						{
 							elog("luaL_loadbuffer Error: ${err}", ("err", str));
+							string errstr(str);
 							lua_pop(L, 1);
+							FC_ASSERT(false, "contract compile error:{err}", ("err", errstr));
 							return false;
 						}
 					}
 					//FC_ASSERT(ret == 0, "contract compile error");
 					elog("luaL_loadbuffer Error: ${err}", ("err", ""));
+					FC_ASSERT(false, "contract compile error:{err}", ("err", ""));
 					return false;
 				}
 				//stack_pos = lua_gettop(L);
@@ -319,11 +331,14 @@ namespace gamebank { namespace chain {
 						{
 							//printf("lua_pcall: %s\n", str);
 							elog("lua_pcall Error: ${err}", ("err", str));
+							string errstr(str);
 							lua_pop(L, 1);
+							FC_ASSERT(false, "contract compile error:{err}", ("err", errstr));
 							return false;
 						}
 					}
 					elog("lua_pcall Error: ${err}", ("err", ""));
+					FC_ASSERT(false, "contract compile error:{err}", ("err", ""));
 					return false;
 					//FC_ASSERT(ret == 0, "contract compile error");
 				}
@@ -360,17 +375,41 @@ namespace gamebank { namespace chain {
 				}
 				if (lua_pcall(L, lua_gettop(L) - (oldStackPos + 1), LUA_MULTRET, 0) != 0)
 				{
+					string errstr;
 					if (L->extend.error_no != LUA_EXTEND_OK) {
 						switch (L->extend.error_no)
 						{
 						case LUA_EXTEND_THROW:
 							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_THROW"));
+							lua_settop(L, oldStackPos);
+							FC_ASSERT(false, "contract call error:{err}", ("err", "LUA_EXTEND_THROW"));
+							return false;
 							break;
 						case LUA_EXTEND_MEM_ERR:
-							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_MEM_ERR"));
+						{
+							global_State * g = G(L);
+							int mem_count = cast_int(gettotalbytes(g) >> 10) + (cast_int(gettotalbytes(g) & 0x3ff) / 1024);
+							elog("lua_pcall Error: ${err} mem:${mem} memlimit:${memlimit}",
+								("err", "LUA_EXTEND_MEM_ERR")
+								("mem", mem_count)
+								("memlimit", L->extend.memory_limit));
+							lua_settop(L, oldStackPos);
+							FC_ASSERT(false, "contract call error:${err} mem:${mem} memlimit:${memlimit}",
+								("err", "LUA_EXTEND_MEM_ERR")
+								("mem", mem_count)
+								("memlimit", L->extend.memory_limit));
+						}
 							break;
 						case LUA_EXTEND_OPCODE_ERR:
-							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_OPCODE_ERR"));
+							elog("lua_pcall Error: ${err} opcount:${opcount} oplimit:${oplimit}",
+								("err", "LUA_EXTEND_OPCODE_ERR")
+								("opcount", L->extend.current_opcode_execute_count)
+								("oplimit", L->extend.opcode_execute_limit));
+							lua_settop(L, oldStackPos);
+							FC_ASSERT(false, "contract call error:${err} opcount:${opcount} oplimit:${oplimit}",
+								("err", "LUA_EXTEND_OPCODE_ERR")
+								("opcount", L->extend.current_opcode_execute_count)
+								("oplimit", L->extend.opcode_execute_limit));
 							break;
 						default:
 							break;
@@ -379,14 +418,17 @@ namespace gamebank { namespace chain {
 						const char* str = lua_tostring(L, -1);
 						if (str != NULL) {
 							elog("lua_pcall Error: ${err}", ("err", str));
+							errstr = str;
 						}
 					}
 					lua_settop(L, oldStackPos);
+					FC_ASSERT(false, "contract call error:{err}", ("err", errstr));
 					return false;
 				}
 				int retNum = lua_gettop(L) - oldStackPos;
 				if (retNum == 1 && lua_isstring(L, -1))
 				{
+					// todo: if is table,convert to jsonstr
 					const char* str = lua_tostring(L, -1);
 					if (str != NULL)
 					{
