@@ -277,7 +277,8 @@ void account_create_evaluator::do_apply( const account_create_operation& o )
 	   FC_ASSERT(creator.vesting_shares - creator.delegated_vesting_shares >= init_delegation_vest_shares, "Insufficient vest shares to create account.",
 		   ("required", init_delegation_vest_shares)
 		   ("creator.vesting_shares", creator.vesting_shares)
-		   ("creator.delegated_vesting_shares", creator.delegated_vesting_shares));
+		   ("creator.delegated_vesting_shares", creator.delegated_vesting_shares)
+		   ("err_op_id", ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_VEST));
 	   _db.modify(creator, [&](account_object& c) {
 		   c.delegated_vesting_shares += init_delegation_vest_shares;
 	   });
@@ -311,10 +312,13 @@ void account_create_evaluator::do_apply( const account_create_operation& o )
    }
    else /*created by non-initminer*/
    {
-	   FC_ASSERT(creator.balance >= o.fee, "Insufficient balance to create account.", ("creator.balance", creator.balance)("required", o.fee));
+	   FC_ASSERT(creator.balance >= o.fee, "Insufficient balance to create account.", 
+			("creator.balance", creator.balance)("required", o.fee)
+			("err_op_id", ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_BALANCE));
 	   FC_ASSERT(o.fee >= asset(GAMEBANK_MIN_ACCOUNT_CREATION_FEE, GBC_SYMBOL), "Insufficient Fee: ${f} required, ${p} provided.",
 		   ("f", GAMEBANK_MIN_ACCOUNT_CREATION_FEE)
-		   ("p", o.fee));
+		   ("p", o.fee)
+		   ("err_op_id", ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_FEE));
 
 	   _db.modify(creator, [&](account_object& c) {
 		   c.balance -= o.fee;
@@ -439,7 +443,8 @@ void account_update_evaluator::do_apply( const account_update_operation& o )
    if( o.owner )
    {
 #ifndef IS_TEST_NET
-         FC_ASSERT( _db.head_block_time() - account_auth.last_owner_update > GAMEBANK_OWNER_UPDATE_LIMIT, "Owner authority can only be updated once an hour." );
+         FC_ASSERT( _db.head_block_time() - account_auth.last_owner_update > GAMEBANK_OWNER_UPDATE_LIMIT, "Owner authority can only be updated once an hour.", 
+						("err_op_id", ERR_OP_ACCOUNT_UPDATE_INTERVAL));
 #endif
 
       verify_authority_accounts_exist( _db, *o.owner, o.account, authority::owner );
@@ -606,16 +611,24 @@ void comment_evaluator::do_apply( const comment_operation& o )
       if( _db.has_hardfork( GAMEBANK_HARDFORK_0_1 ) )
       {
          if( o.parent_author == GAMEBANK_ROOT_POST_PARENT )
-             FC_ASSERT( ( now - auth.last_root_post ) > GAMEBANK_MIN_ROOT_COMMENT_INTERVAL, "You may only post once every 5 minutes.", ("now",now)("last_root_post", auth.last_root_post) );
+             FC_ASSERT( ( now - auth.last_root_post ) > GAMEBANK_MIN_ROOT_COMMENT_INTERVAL, "You may only post once every 5 minutes.", 
+								("now",now)("last_root_post", auth.last_root_post)
+								("err_op_id", ERR_OP_POST_INTERVAL));
          else
-             FC_ASSERT( (now - auth.last_post) >= GAMEBANK_MIN_REPLY_INTERVAL_HF01, "You may only comment once every 3 seconds.", ("now",now)("auth.last_post",auth.last_post) );
+             FC_ASSERT( (now - auth.last_post) >= GAMEBANK_MIN_REPLY_INTERVAL_HF01, "You may only comment once every 3 seconds.", 
+								("now",now)("auth.last_post",auth.last_post)
+								("err_op_id", ERR_OP_COMMENT_INTERVAL));
       }
       else
       {
          if( o.parent_author == GAMEBANK_ROOT_POST_PARENT )
-             FC_ASSERT( ( now - auth.last_root_post ) > GAMEBANK_MIN_ROOT_COMMENT_INTERVAL, "You may only post once every 5 minutes.", ("now",now)("last_root_post", auth.last_root_post) );
+             FC_ASSERT( ( now - auth.last_root_post ) > GAMEBANK_MIN_ROOT_COMMENT_INTERVAL, "You may only post once every 5 minutes.", 
+								("now",now)("last_root_post", auth.last_root_post)
+								("err_op_id", ERR_OP_POST_INTERVAL));
          else
-             FC_ASSERT( (now - auth.last_post) > GAMEBANK_MIN_REPLY_INTERVAL, "You may only comment once every 20 seconds.", ("now",now)("auth.last_post",auth.last_post) );
+             FC_ASSERT( (now - auth.last_post) > GAMEBANK_MIN_REPLY_INTERVAL, "You may only comment once every 20 seconds.", 
+								("now",now)("auth.last_post",auth.last_post)
+								("err_op_id", ERR_OP_COMMENT_INTERVAL));
       }
 
       uint16_t reward_weight = GAMEBANK_100_PERCENT;
@@ -936,7 +949,7 @@ void escrow_release_evaluator::do_apply( const escrow_release_operation& o )
 
 void transfer_evaluator::do_apply( const transfer_operation& o )
 {
-   FC_ASSERT( _db.get_balance( o.from, o.amount.symbol ) >= o.amount, "Account does not have sufficient funds for transfer." );
+   FC_ASSERT( _db.get_balance( o.from, o.amount.symbol ) >= o.amount, "Account does not have sufficient funds for transfer." , ("err_op_id", ERR_OP_TRANSFER_INSUFFICIENT));
    _db.adjust_balance( o.from, -o.amount );
    _db.adjust_balance( o.to, o.amount );
 }
@@ -947,7 +960,7 @@ void transfer_to_vesting_evaluator::do_apply( const transfer_to_vesting_operatio
    const auto& to_account = o.to.size() ? _db.get_account(o.to) : from_account;
 
    FC_ASSERT( _db.get_balance( from_account, o.amount.symbol) >= o.amount,
-              "Account does not have sufficient liquid amount for transfer." );
+              "Account does not have sufficient liquid amount for transfer.", ("err_op_id", ERR_OP_TRANSFER_TO_VEST_INSUFFICIENT));
    _db.adjust_balance( from_account, -o.amount );
    _db.create_vesting( to_account, o.amount );
 }
@@ -978,7 +991,7 @@ void withdraw_vesting_evaluator::do_apply( const withdraw_vesting_operation& o )
    */
    if( o.vesting_shares.amount == 0 )
    {
-      FC_ASSERT( account.vesting_withdraw_rate.amount  != 0, "This operation would not change the vesting withdraw rate." );
+      FC_ASSERT( account.vesting_withdraw_rate.amount  != 0, "This operation would not change the vesting withdraw rate." , ("err_op_id", ERR_OP_WITHDRAW_RATE));
 
       _db.modify( account, [&]( account_object& a ) {
          a.vesting_withdraw_rate = asset( 0, GBS_SYMBOL );
@@ -998,7 +1011,8 @@ void withdraw_vesting_evaluator::do_apply( const withdraw_vesting_operation& o )
          if( new_vesting_withdraw_rate.amount == 0 )
             new_vesting_withdraw_rate.amount = 1;
 
-         FC_ASSERT( account.vesting_withdraw_rate  != new_vesting_withdraw_rate, "This operation would not change the vesting withdraw rate." );
+         FC_ASSERT( account.vesting_withdraw_rate  != new_vesting_withdraw_rate, "This operation would not change the vesting withdraw rate." , 
+			 ("err_op_id", ERR_OP_WITHDRAW_RATE));
 
          a.vesting_withdraw_rate = new_vesting_withdraw_rate;
          a.next_vesting_withdrawal = _db.head_block_time() + fc::seconds(GAMEBANK_VESTING_WITHDRAW_INTERVAL_SECONDS);
@@ -1169,9 +1183,9 @@ void vote_evaluator::do_apply( const vote_operation& o )
    const auto& comment = _db.get_comment( o.author, o.permlink );
    const auto& voter   = _db.get_account( o.voter );
 
-   FC_ASSERT( voter.can_vote, "Voter has declined their voting rights." );
+   FC_ASSERT( voter.can_vote, "Voter has declined their voting rights." , ("err_op_id", ERR_OP_VOTE_DECLINE_VOTE_RIGHT));
 
-   if( o.weight > 0 ) FC_ASSERT( comment.allow_votes, "Votes are not allowed on the comment." );
+   if( o.weight > 0 ) FC_ASSERT( comment.allow_votes, "Votes are not allowed on the comment." , ("err_op_id", ERR_OP_VOTE_COMMENT_NOT_ALLOW));
 
    if( _db.calculate_discussion_payout_time( comment ) == fc::time_point_sec::maximum() )
    {
@@ -1202,11 +1216,11 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
    int64_t elapsed_seconds   = (_db.head_block_time() - voter.last_vote_time).to_seconds();
 
-   FC_ASSERT( elapsed_seconds >= GAMEBANK_MIN_VOTE_INTERVAL_SEC, "Can only vote once every 3 seconds." );
+   FC_ASSERT( elapsed_seconds >= GAMEBANK_MIN_VOTE_INTERVAL_SEC, "Can only vote once every 3 seconds." , ("err_op_id", ERR_OP_VOTE_INTERVAL));
 
    int64_t regenerated_power = (GAMEBANK_100_PERCENT * elapsed_seconds) / GAMEBANK_VOTE_REGENERATION_SECONDS;
    int64_t current_power     = std::min( int64_t(voter.voting_power + regenerated_power), int64_t(GAMEBANK_100_PERCENT) );
-   FC_ASSERT( current_power > 0, "Account currently does not have voting power." );
+   FC_ASSERT( current_power > 0, "Account currently does not have voting power." , ("err_op_id", ERR_OP_VOTE_NO_POWER));
 
    int64_t  abs_weight    = abs(o.weight);
    // Less rounding error would occur if we did the division last, but we need to maintain backward
@@ -1222,7 +1236,7 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
    used_power = (used_power + max_vote_denom - 1) / max_vote_denom;
    
-   FC_ASSERT( used_power <= current_power, "Account does not have enough power to vote." );
+   FC_ASSERT( used_power <= current_power, "Account does not have enough power to vote." , ("err_op_id", ERR_OP_VOTE_INSUFFICIENT_POWER));
 
    int64_t abs_rshares    = ((uint128_t( _db.get_effective_vesting_shares( voter, GBS_SYMBOL ).amount.value ) * used_power) / (GAMEBANK_100_PERCENT)).to_uint64();
    ilog("abs_rshares == ${rshares}, used_power == ${power}", ("rshares", abs_rshares)("power", used_power));
@@ -1234,7 +1248,8 @@ void vote_evaluator::do_apply( const vote_operation& o )
    }
    else
    {
-      FC_ASSERT( abs_rshares > GAMEBANK_VOTE_DUST_THRESHOLD || o.weight == 0, "Voting weight is too small, please accumulate more voting power or gamebank power." );
+      FC_ASSERT( abs_rshares > GAMEBANK_VOTE_DUST_THRESHOLD || o.weight == 0, "Voting weight is too small, please accumulate more voting power or gamebank power." , 
+		  ("err_op_id", ERR_OP_VOTE_INSUFFICIENT_WEIGHT));
    }
 
 
@@ -1390,7 +1405,7 @@ void vote_evaluator::do_apply( const vote_operation& o )
    {
       FC_ASSERT( itr->num_changes < GAMEBANK_MAX_VOTE_CHANGES, "Voter has used the maximum number of vote changes on this comment." );
 
-      FC_ASSERT( itr->vote_percent != o.weight, "You have already voted in a similar way." );
+      FC_ASSERT( itr->vote_percent != o.weight, "You have already voted in a similar way." , ("err_op_id", ERR_OP_VOTE_SIMILAR));
 
       /// this is the rshares voting for or against the post
       int64_t rshares        = o.weight < 0 ? -abs_rshares : abs_rshares;
@@ -1884,7 +1899,8 @@ void request_account_recovery_evaluator::do_apply( const request_account_recover
 
    if ( account_to_recover.recovery_account.length() )   // Make sure recovery matches expected recovery account
    {
-      FC_ASSERT( account_to_recover.recovery_account == o.recovery_account, "Cannot recover an account that does not have you as there recovery partner." );
+      FC_ASSERT( account_to_recover.recovery_account == o.recovery_account, "Cannot recover an account that does not have you as there recovery partner." , 
+					("err_op_id", ERR_OP_REQUEST_ACCOUNT_RECOVERY_NOT_MATCH));
       if( o.recovery_account == GAMEBANK_TEMP_ACCOUNT )
          wlog( "Recovery by temp account" );
    }
@@ -1896,8 +1912,8 @@ void request_account_recovery_evaluator::do_apply( const request_account_recover
 
    if( request == recovery_request_idx.end() ) // New Request
    {
-      FC_ASSERT( !o.new_owner_authority.is_impossible(), "Cannot recover using an impossible authority." );
-      FC_ASSERT( o.new_owner_authority.weight_threshold, "Cannot recover using an open authority." );
+      FC_ASSERT( !o.new_owner_authority.is_impossible(), "Cannot recover using an impossible authority." , ("err_op_id", ERR_OP_REQUEST_ACCOUNT_RECOVERY_AUTHORITY));
+      FC_ASSERT( o.new_owner_authority.weight_threshold, "Cannot recover using an open authority." , ("err_op_id", ERR_OP_REQUEST_ACCOUNT_RECOVERY_AUTHORITY));
 
       // Check accounts in the new authority exist
     
@@ -1920,7 +1936,7 @@ void request_account_recovery_evaluator::do_apply( const request_account_recover
    }
    else // Change Request
    {
-      FC_ASSERT( !o.new_owner_authority.is_impossible(), "Cannot recover using an impossible authority." );
+      FC_ASSERT( !o.new_owner_authority.is_impossible(), "Cannot recover using an impossible authority." , ("err_op_id", ERR_OP_REQUEST_ACCOUNT_RECOVERY_AUTHORITY));
 
       // Check accounts in the new authority exist
       
@@ -1943,13 +1959,14 @@ void recover_account_evaluator::do_apply( const recover_account_operation& o )
    const auto& account = _db.get_account( o.account_to_recover );
 
    
-   FC_ASSERT( _db.head_block_time() - account.last_account_recovery > GAMEBANK_OWNER_UPDATE_LIMIT, "Owner authority can only be updated once an hour." );
+   FC_ASSERT( _db.head_block_time() - account.last_account_recovery > GAMEBANK_OWNER_UPDATE_LIMIT, "Owner authority can only be updated once an hour." , 
+	   ("err_op_id", ERR_OP_RECOVER_ACCOUNT_INTERVAL));
 
    const auto& recovery_request_idx = _db.get_index< account_recovery_request_index >().indices().get< by_account >();
    auto request = recovery_request_idx.find( o.account_to_recover );
 
-   FC_ASSERT( request != recovery_request_idx.end(), "There are no active recovery requests for this account." );
-   FC_ASSERT( request->new_owner_authority == o.new_owner_authority, "New owner authority does not match recovery request." );
+   FC_ASSERT( request != recovery_request_idx.end(), "There are no active recovery requests for this account." , ("err_op_id", ERR_OP_RECOVER_ACCOUNT_NO_REQUEST));
+   FC_ASSERT( request->new_owner_authority == o.new_owner_authority, "New owner authority does not match recovery request." , ("err_op_id", ERR_OP_RECOVER_ACCOUNT_NOT_MATCH_OWNER));
 
    const auto& recent_auth_idx = _db.get_index< owner_authority_history_index >().indices().get< by_account >();
    auto hist = recent_auth_idx.lower_bound( o.account_to_recover );
@@ -1962,7 +1979,7 @@ void recover_account_evaluator::do_apply( const recover_account_operation& o )
       ++hist;
    }
 
-   FC_ASSERT( found, "Recent authority not found in authority history." );
+   FC_ASSERT( found, "Recent authority not found in authority history." , ("err_op_id", ERR_OP_RECOVER_ACCOUNT_NO_HISTORY));
 
    _db.remove( *request ); // Remove first, update_owner_authority may invalidate iterator
    _db.update_owner_authority( account, o.new_owner_authority );
@@ -2113,11 +2130,11 @@ void claim_reward_balance_evaluator::do_apply( const claim_reward_balance_operat
    const auto& acnt = _db.get_account( op.account );
 
    FC_ASSERT( op.reward_gbc <= acnt.reward_gbc_balance, "Cannot claim that much GBC. Claim: ${c} Actual: ${a}",
-      ("c", op.reward_gbc)("a", acnt.reward_gbc_balance) );
+      ("c", op.reward_gbc)("a", acnt.reward_gbc_balance)("err_op_id", ERR_OP_CLAIM_REWARD_BALANCE_INSUFFICIENT_GBC) );
    FC_ASSERT( op.reward_gbd <= acnt.reward_gbd_balance, "Cannot claim that much GBD. Claim: ${c} Actual: ${a}",
-      ("c", op.reward_gbd)("a", acnt.reward_gbd_balance) );
+      ("c", op.reward_gbd)("a", acnt.reward_gbd_balance)("err_op_id", ERR_OP_CLAIM_REWARD_BALANCE_INSUFFICIENT_GBD));
    FC_ASSERT( op.reward_vests <= acnt.reward_vesting_balance, "Cannot claim that much GBS. Claim: ${c} Actual: ${a}",
-      ("c", op.reward_vests)("a", acnt.reward_vesting_balance) );
+      ("c", op.reward_vests)("a", acnt.reward_vesting_balance)("err_op_id", ERR_OP_CLAIM_REWARD_BALANCE_INSUFFICIENT_GBP));
 
    asset reward_vesting_gbc_to_move = asset( 0, GBC_SYMBOL );
    if( op.reward_vests == acnt.reward_vesting_balance )
@@ -2172,8 +2189,10 @@ void delegate_vesting_shares_evaluator::do_apply( const delegate_vesting_shares_
    // If delegation doesn't exist, create it
    if( delegation == nullptr )
    {
-      FC_ASSERT( available_shares >= op.vesting_shares, "Account does not have enough vesting shares to delegate." );
-      FC_ASSERT( op.vesting_shares >= min_delegation, "Account must delegate a minimum of ${v}", ("v", min_delegation) );
+      FC_ASSERT( available_shares >= op.vesting_shares, "Account does not have enough vesting shares to delegate.", 
+		  ("err_op_id", ERR_OP_DELEGATE_VESTING_SHARES_INSUFFICIENT));
+      FC_ASSERT( op.vesting_shares >= min_delegation, "Account must delegate a minimum of ${v}", 
+		  ("v", min_delegation)("err_op_id", ERR_OP_DELEGATE_VESTING_SHARES_TOO_FEW));
 
       _db.create< vesting_delegation_object >( [&]( vesting_delegation_object& obj )
       {
@@ -2198,8 +2217,10 @@ void delegate_vesting_shares_evaluator::do_apply( const delegate_vesting_shares_
    {
       auto delta = op.vesting_shares - delegation->vesting_shares;
 
-      FC_ASSERT( delta >= min_update, "Gamebank Power increase is not enough of a difference. min_update: ${min}", ("min", min_update) );
-      FC_ASSERT( available_shares >= op.vesting_shares - delegation->vesting_shares, "Account does not have enough vesting shares to delegate." );
+      FC_ASSERT( delta >= min_update, "Gamebank Power increase is not enough of a difference. min_update: ${min}", 
+		  ("min", min_update)("err_op_id", ERR_OP_DELEGATE_VESTING_SHARES_INCREASE_INSUFFICIENT));
+      FC_ASSERT( available_shares >= op.vesting_shares - delegation->vesting_shares, "Account does not have enough vesting shares to delegate.", 
+		  ("err_op_id", ERR_OP_DELEGATE_VESTING_SHARES_INSUFFICIENT));
 
       _db.modify( delegator, [&]( account_object& a )
       {
@@ -2223,12 +2244,15 @@ void delegate_vesting_shares_evaluator::do_apply( const delegate_vesting_shares_
 
       if( op.vesting_shares.amount > 0 )
       {
-         FC_ASSERT( delta >= min_update, "Gamebank Power decrease is not enough of a difference. min_update: ${min}", ("min", min_update) );
-         FC_ASSERT( op.vesting_shares >= min_delegation, "Delegation must be removed or leave minimum delegation amount of ${v}", ("v", min_delegation) );
+         FC_ASSERT( delta >= min_update, "Gamebank Power decrease is not enough of a difference. min_update: ${min}", 
+			 ("min", min_update)("err_op_id", ERR_OP_DELEGATE_VESTING_SHARES_DECREASE_INSUFFICIENT));
+         FC_ASSERT( op.vesting_shares >= min_delegation, "Delegation must be removed or leave minimum delegation amount of ${v}", 
+			 ("v", min_delegation)("err_op_id", ERR_OP_DELEGATE_VESTING_SHARES_TOO_FEW));
       }
       else
       {
-         FC_ASSERT( delegation->vesting_shares.amount > 0, "Delegation would set vesting_shares to zero, but it is already zero");
+         FC_ASSERT( delegation->vesting_shares.amount > 0, "Delegation would set vesting_shares to zero, but it is already zero", 
+			 ("err_op_id", ERR_OP_DELEGATE_VESTING_INVALID));
       }
 
       _db.create< vesting_delegation_expiration_object >( [&]( vesting_delegation_expiration_object& obj )
