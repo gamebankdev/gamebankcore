@@ -243,7 +243,7 @@ namespace gamebank { namespace chain {
 				{
 				case LUA_EXTEND_THROW:
 					elog("luaL_loadbuffer Error: ${err}", ("err", "LUA_EXTEND_THROW"));
-					FC_ASSERT(false, "contract compile error:{err}", ("err", "LUA_EXTEND_THROW"));
+					FC_ASSERT(false, "contract compile error:${err}", ("err", "LUA_EXTEND_THROW"));
 					break;
 				case LUA_EXTEND_MEM_ERR:
 				{
@@ -294,13 +294,13 @@ namespace gamebank { namespace chain {
 							elog("luaL_loadbuffer Error: ${err}", ("err", str));
 							string errstr(str);
 							lua_pop(L, 1);
-							FC_ASSERT(false, "contract compile error:{err}", ("err", errstr));
+							FC_ASSERT(false, "contract compile error:${err}", ("err", errstr));
 							return false;
 						}
 					}
 					//FC_ASSERT(ret == 0, "contract compile error");
 					elog("luaL_loadbuffer Error: ${err}", ("err", ""));
-					FC_ASSERT(false, "contract compile error:{err}", ("err", ""));
+					FC_ASSERT(false, "contract compile error:${err}", ("err", ""));
 					return false;
 				}
 				//stack_pos = lua_gettop(L);
@@ -333,12 +333,12 @@ namespace gamebank { namespace chain {
 							elog("lua_pcall Error: ${err}", ("err", str));
 							string errstr(str);
 							lua_pop(L, 1);
-							FC_ASSERT(false, "contract compile error:{err}", ("err", errstr));
+							FC_ASSERT(false, "contract compile error:${err}", ("err", errstr));
 							return false;
 						}
 					}
 					elog("lua_pcall Error: ${err}", ("err", ""));
-					FC_ASSERT(false, "contract compile error:{err}", ("err", ""));
+					FC_ASSERT(false, "contract compile error:${err}", ("err", ""));
 					return false;
 					//FC_ASSERT(ret == 0, "contract compile error");
 				}
@@ -382,7 +382,7 @@ namespace gamebank { namespace chain {
 						case LUA_EXTEND_THROW:
 							elog("lua_pcall Error: ${err}", ("err", "LUA_EXTEND_THROW"));
 							lua_settop(L, oldStackPos);
-							FC_ASSERT(false, "contract call error:{err}", ("err", "LUA_EXTEND_THROW"));
+							FC_ASSERT(false, "contract call error:${err}", ("err", "LUA_EXTEND_THROW"));
 							return false;
 							break;
 						case LUA_EXTEND_MEM_ERR:
@@ -422,7 +422,7 @@ namespace gamebank { namespace chain {
 						}
 					}
 					lua_settop(L, oldStackPos);
-					FC_ASSERT(false, "contract call error:{err}", ("err", errstr));
+					FC_ASSERT(false, "contract call error:${err}", ("err", errstr));
 					return false;
 				}
 				int retNum = lua_gettop(L) - oldStackPos;
