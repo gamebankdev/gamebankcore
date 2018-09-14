@@ -20,6 +20,8 @@ extern "C"
 
 namespace gamebank { namespace chain {
 
+#define CONTRACT_ONDEPLOY_NAME "on_deploy"
+
 	namespace detail {
 		class contract_lua_impl
 		{
@@ -204,6 +206,11 @@ namespace gamebank { namespace chain {
 										return false;
 									}
 									// todo: how to determine RK(C) is a function?
+									if (strcmp(bname, CONTRACT_ONDEPLOY_NAME) == 0
+										&& !has_ondeploy_method ) {
+										has_ondeploy_method = true;
+										continue;
+									}
 									// check abi
 									if ( !is_abi(bname)) {
 										FC_ASSERT(false, "cant modify global var: ${var} line:${line}", ("var", bname)("line", line));
@@ -274,7 +281,7 @@ namespace gamebank { namespace chain {
 				}
 			}
 
-			bool deploy(const std::string& data)
+			bool load(const std::string& data)
 			{
 				//int stack_pos = lua_gettop(L);
 				//dlog("deploy 1 stack_pos=%d\n", stack_pos);
@@ -309,7 +316,7 @@ namespace gamebank { namespace chain {
 				LClosure* lc = clLvalue(L->top - 1);
 				if (lc == nullptr || lc->p == nullptr)
 				{
-					elog("clLvalue Error: lc == nullptr || lc->p == nullptr" );
+					elog("clLvalue Error: lc == nullptr || lc->p == nullptr");
 					return false;
 				}
 				if (!compile_check(lc->p, nullptr))
@@ -341,6 +348,18 @@ namespace gamebank { namespace chain {
 					FC_ASSERT(false, "contract compile error:${err}", ("err", ""));
 					return false;
 					//FC_ASSERT(ret == 0, "contract compile error");
+				}
+				return true;
+			}
+
+			bool deploy(const std::string& data)
+			{
+				if (!load(data))
+					return false;
+				if (has_ondeploy_method) {
+					std::string result;
+					variants op_args;
+					FC_ASSERT(contract.call_method("on_deploy", op_args, result), "on_deploy error");
 				}
 				return true;
 			}
@@ -496,6 +515,7 @@ namespace gamebank { namespace chain {
 			contract_lua& contract;
 			std::set<std::string> abi_method_names;
 			std::set<std::string> sys_functions;
+			bool has_ondeploy_method = false;
 		};
 	}
 
@@ -511,6 +531,11 @@ namespace gamebank { namespace chain {
 	bool contract_lua::deploy(const std::string& data)
 	{
 		return my->deploy(data);
+	}
+
+	bool contract_lua::load(const std::string& data)
+	{
+		return my->load(data);
 	}
 
 	bool contract_lua::call_method(const std::string& method, const variants& args, std::string& result)

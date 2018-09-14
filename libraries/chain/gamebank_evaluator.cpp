@@ -2453,16 +2453,6 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 			note.remain_bandwidth = 0;
 		}
 
-		int memory_limit = note.remain_bandwidth/10;
-		int opcode_limit = note.remain_bandwidth;
-
-		contract_lua contract(op.creator);
-		contract.set_database(&_db);
-		contract.set_abi(abi_method_names);
-		contract.set_extend(op.creator, op.creator);
-		contract.set_extend_arg(memory_limit, opcode_limit);
-		FC_ASSERT(contract.deploy(op.code), "deploy error");
-
 		_db.create<contract_object>([&](contract_object& obj)
 		{
 			obj.creator = op.creator;
@@ -2474,12 +2464,15 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 			obj.last_update = obj.created;
 		});
 
-		// call method on_deploy
-		if (abi_method_names.find("on_deploy") != abi_method_names.end()) {
-			std::string result;
-			variants op_args;
-			FC_ASSERT(contract.call_method("on_deploy", op_args, result), "on_deploy error");
-		}
+		int memory_limit = note.remain_bandwidth / 10;
+		int opcode_limit = note.remain_bandwidth;
+
+		contract_lua contract(op.creator);
+		contract.set_database(&_db);
+		contract.set_abi(abi_method_names);
+		contract.set_extend(op.creator, op.creator);
+		contract.set_extend_arg(memory_limit, opcode_limit);
+		FC_ASSERT(contract.deploy(op.code), "deploy error");
 
 		// todo: update account bandwith
 		int current_opcount = contract.get_current_opcount();
@@ -2560,7 +2553,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 		contract.set_abi(abi_method_names);
 		contract.set_extend(op.contract_name, op.caller);
 		contract.set_extend_arg(memory_limit, opcode_limit);
-		FC_ASSERT(contract.deploy(to_string(contract_data.code)), "call error");
+		FC_ASSERT(contract.load(to_string(contract_data.code)), "load contract error");
 
 		std::string result;
 		FC_ASSERT( contract.call_method(op.method, op_args, result), "call method error" );

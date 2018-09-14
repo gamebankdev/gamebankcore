@@ -16,6 +16,7 @@ namespace gamebank { namespace chain {
 		~contract_lua();
 
 		virtual bool deploy(const std::string& data);
+		bool load(const std::string& data);
 
 		virtual bool call_method(const std::string& method, const variants& args, std::string& result);
 
