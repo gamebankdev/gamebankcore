@@ -2514,7 +2514,7 @@ void contract_deploy_evaluator::do_apply(const contract_deploy_operation& op)
 		contract_lua contract(op.creator);
 		contract.set_database(&_db);
 		contract.set_abi(abi_method_names);
-		contract.set_extend(op.creator, op.creator);
+		contract.set_extend(op.name, op.creator);
 		contract.set_extend_arg(memory_limit, opcode_limit);
 		FC_ASSERT(contract.deploy(op.code), "deploy error");
 
