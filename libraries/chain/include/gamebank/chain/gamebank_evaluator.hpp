@@ -63,7 +63,7 @@ GAMEBANK_DEFINE_EVALUATOR( nonfungible_fund_buy )
 //define the error type of operations associated with an error message passed to FC_ASSERT
 
 #define	ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_VEST			1
-#define ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_BALANCE		2
+#define	ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_BALANCE		2
 #define ERR_OP_ACCOUNT_CREATE_INSUFFICIENT_FEE			3
 #define ERR_OP_ACCOUNT_UPDATE_INTERVAL					4
 #define ERR_OP_POST_INTERVAL							5
@@ -93,6 +93,8 @@ GAMEBANK_DEFINE_EVALUATOR( nonfungible_fund_buy )
 #define	ERR_OP_DELEGATE_VESTING_SHARES_DECREASE_INSUFFICIENT		29
 #define	ERR_OP_DELEGATE_VESTING_INVALID								30
 //must add new err type below in future
+#define ERR_OP_VOTE_APPROACH_CASHOUT					31
+
  
 }} // gamebank::chain
 

@@ -665,8 +665,6 @@ void comment_evaluator::do_apply( const comment_operation& o )
             from_string( com.parent_permlink, o.parent_permlink );
             from_string( com.category, o.parent_permlink );
             com.root_comment = com.id;
-            com.cashout_time =   _db.head_block_time() + GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD;
-
          }
          else
          {
@@ -675,10 +673,7 @@ void comment_evaluator::do_apply( const comment_operation& o )
             com.depth = parent->depth + 1;
             com.category = parent->category;
             com.root_comment = parent->root_comment;
-            com.cashout_time = fc::time_point_sec::maximum();
          }
-
-
          com.cashout_time = com.created + GAMEBANK_CASHOUT_WINDOW_SECONDS;
 
       });
@@ -1271,7 +1266,8 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
       if( rshares > 0 )
       {
-         FC_ASSERT( _db.head_block_time() < comment.cashout_time - GAMEBANK_UPVOTE_LOCKOUT_TIME, "Cannot increase payout within last twelve hours before payout." );
+         FC_ASSERT( _db.head_block_time() < comment.cashout_time - GAMEBANK_UPVOTE_LOCKOUT_TIME, "Cannot increase payout within last twelve hours before payout." ,
+					("err_op_id", ERR_OP_VOTE_APPROACH_CASHOUT));
       }
 
       //used_power /= (50*7); /// a 100% vote means use .28% of voting power which should force users to spread their votes around over 50+ posts day for a week
