@@ -34,8 +34,8 @@ struct api_signed_contract_object : public signed_contract
 {
    api_signed_contract_object(const signed_contract& contract) : signed_contract(contract) 
    {
-      for (const signed_transaction& tx : transactions)
-         transaction_ids.push_back(tx.id());
+      for (const contract_transaction& tx : transactions)
+         transaction_ids.push_back(tx.transaction_id);
    }
    api_signed_contract_object() {}
 

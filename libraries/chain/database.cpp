@@ -3144,6 +3144,7 @@ void database::_apply_block( const signed_block& next_block )
       apply_transaction( trx, skip );
       ++_current_trx_in_block;
       contract_transaction ctx;
+      ctx.transaction_id = trx.id();
       ctx.ref_block_num = trx.ref_block_num;
       ctx.ref_block_prefix = trx.ref_block_prefix;
       ctx.operations.swap( _contract_operation );

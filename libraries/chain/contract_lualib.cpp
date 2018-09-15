@@ -186,7 +186,7 @@ static int contract_transfer(lua_State *L) {
 
     contract_log_operation logs;
     logs.name = L->extend.contract_name;
-    logs.data = string("{transfer:[") + from + string(",") + to + string(",") + to_string(amount) + string("]}");
+    logs.data = string("{\"transfer\":[\"") + from + string("\",\"") + to + string("\",\"") + to_string(amount) + string("\"]}");
     db->contract_operation(logs);
 	return 0;
 }
@@ -210,13 +210,30 @@ static int contract_emit(lua_State *L) {
         if (i > 2) {
             data += ",";
         }
-        if (lua_isnumber(L, i)) {
-            data += std::to_string(lua_tonumber(L, i));
-        }
-        else if (lua_isstring(L, i)) {
+        switch (lua_type(L, i))
+        {
+        case LUA_TSTRING:
+        {
+            data += "\"";
             data += lua_tostring(L, i);
+            data += "\"";
         }
-        else {
+        break;
+        case LUA_TNUMBER:
+        {
+            if (lua_isinteger(L, i)) {
+                data += std::to_string(lua_tointeger(L, i));
+            }
+            else if (lua_isnumber(L, i)) {
+                data += std::to_string(lua_tonumber(L, i));
+            }
+            else {
+                luaL_error(L, "expected emit arg,not integer or not number");
+                return 0;
+            }
+        }
+        break;
+        default:
             luaL_error(L, "expected emit arg,not integer and not string");
             return 0;
         }
@@ -225,7 +242,7 @@ static int contract_emit(lua_State *L) {
 
     contract_log_operation logs;
     logs.name = L->extend.contract_name;
-    logs.data = string("{") + key + string(":[") + data + string("]}");
+    logs.data = string("{\"") + key + string("\":[") + data + string("]}");
     db->contract_operation(logs);
     return 0;
 }

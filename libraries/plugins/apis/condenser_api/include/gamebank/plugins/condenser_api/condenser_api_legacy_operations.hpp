@@ -70,6 +70,7 @@ namespace gamebank { namespace plugins { namespace condenser_api {
    typedef nonfungible_fund_buy_operation         legacy_nonfungible_fund_buy_operation;
    typedef contract_deploy_operation              legacy_contract_deploy_operation;
    typedef contract_call_operation                legacy_contract_call_operation;
+   typedef contract_log_operation                 legacy_contract_log_operation;
 
    struct legacy_price
    {
@@ -1109,7 +1110,8 @@ namespace gamebank { namespace plugins { namespace condenser_api {
 	        legacy_nonfungible_fund_withdraw_from_sale_operation,
 	        legacy_nonfungible_fund_buy_operation,
             legacy_contract_deploy_operation,
-            legacy_contract_call_operation
+            legacy_contract_call_operation,
+			legacy_contract_log_operation
          > legacy_operation;
 
    struct legacy_operation_conversion_visitor
@@ -1154,7 +1156,8 @@ namespace gamebank { namespace plugins { namespace condenser_api {
       bool operator()(const nonfungible_fund_buy_operation& op)const             { l_op = op; return true; }
       bool operator()(const contract_deploy_operation& op)const                  { l_op = op; return true; }
       bool operator()(const contract_call_operation& op)const                    { l_op = op; return true; }
-
+	  bool operator()(const contract_log_operation& op)const                     { l_op = op; return true; }
+	  
       bool operator()( const transfer_operation& op )const
       {
          l_op = legacy_transfer_operation( op );

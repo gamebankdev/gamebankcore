@@ -180,6 +180,7 @@ namespace gamebank { namespace protocol {
    {
       contract_log_operation() {}
       contract_log_operation( const string& n, const string& d ) : name( n ), data( d ) {}
+
       string           name;
       string           data;
    };

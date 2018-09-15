@@ -101,13 +101,12 @@ namespace gamebank { namespace protocol {
       uint32_t            transaction_num = 0;
    };
 
-   typedef transaction contract_transaction;
-   //struct contract_transaction : public transaction
-   //{
-   //   contract_transaction(const transaction& trx = transaction())
-   //      : transaction(trx) {}
-   //     
-   //};
+   struct contract_transaction : public transaction
+   {
+      transaction_id_type transaction_id;
+
+      transaction_id_type id()const { return transaction_id; }
+   };
 
    /// @} transactions group
 
@@ -116,4 +115,4 @@ namespace gamebank { namespace protocol {
 FC_REFLECT( gamebank::protocol::transaction, (ref_block_num)(ref_block_prefix)(expiration)(operations)(extensions) )
 FC_REFLECT_DERIVED( gamebank::protocol::signed_transaction, (gamebank::protocol::transaction), (signatures) )
 FC_REFLECT_DERIVED( gamebank::protocol::annotated_signed_transaction, (gamebank::protocol::signed_transaction), (transaction_id)(block_num)(transaction_num) );
-//FC_REFLECT_DERIVED( gamebank::protocol::contract_transaction, (gamebank::protocol::transaction), (signatures))
+FC_REFLECT_DERIVED( gamebank::protocol::contract_transaction, (gamebank::protocol::transaction), (transaction_id) )
