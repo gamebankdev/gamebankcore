@@ -16,6 +16,50 @@ extern "C"
 }
 
 namespace gamebank { namespace chain {
+    string asset_num_to_string(uint32_t asset_num)
+    {
+        switch (asset_num)
+        {
+        case GAMEBANK_ASSET_NUM_GBC:
+            //return "GBC";
+            return "GB";
+        case GAMEBANK_ASSET_NUM_GBD:
+            return "GBD";
+        case GAMEBANK_ASSET_NUM_GBS:
+            return "GBS";
+        default:
+            return "UNKN";
+        }
+    }
+
+    int64_t precision(const asset_symbol_type& symbol)
+    {
+        static int64_t table[] = {
+            1, 10, 100, 1000, 10000,
+            100000, 1000000, 10000000, 100000000ll,
+            1000000000ll, 10000000000ll,
+            100000000000ll, 1000000000000ll,
+            10000000000000ll, 100000000000000ll
+        };
+        uint8_t d = symbol.decimals();
+        return table[d];
+    }
+
+    string to_string(const asset& legacy_asset)
+    {
+        int64_t prec = precision(legacy_asset.symbol);
+        string result = fc::to_string(legacy_asset.amount.value / prec);
+        if (prec > 1)
+        {
+            auto fract = legacy_asset.amount.value % prec;
+            // prec is a power of ten, so for example when working with
+            // 7.005 we have fract = 5, prec = 1000.  So prec+fract=1005
+            // has the correct number of zeros and we can simply trim the
+            // leading 1.
+            result += "." + fc::to_string(prec + fract).erase(0, 1);
+        }
+        return result + " " + asset_num_to_string(legacy_asset.symbol.asset_num);
+    }
 
 static int contract_get_name(lua_State *L) {
 	lua_pushstring(L, L->extend.contract_name);
@@ -140,12 +184,50 @@ static int contract_transfer(lua_State *L) {
         db->adjust_balance(to, amount);
     }
 
-    transfer_operation tsf;
-    tsf.from = from;
-    tsf.to = to;
-    tsf.amount = amount;
-    db->contract_operation(tsf);
+    contract_log_operation logs;
+    logs.name = L->extend.contract_name;
+    logs.data = string("{transfer:[") + from + string(",") + to + string(",") + to_string(amount) + string("]}");
+    db->contract_operation(logs);
 	return 0;
+}
+
+static int contract_emit(lua_State *L) {
+    int32_t num = lua_gettop(L);
+    if (num <= 1)
+    {
+        luaL_error(L, "expected 1 arg");
+        return 0;
+    }
+    if (!lua_isstring(L, 1))
+    {
+        luaL_error(L, "expected string arg");
+        return 0;
+    }
+    string key = lua_tostring(L, 1);
+    string data;
+    for (uint32_t i = 2; i <= num; ++i)
+    {
+        if (i > 2) {
+            data += ",";
+        }
+        if (lua_isnumber(L, i)) {
+            data += std::to_string(lua_tonumber(L, i));
+        }
+        else if (lua_isstring(L, i)) {
+            data += lua_tostring(L, i);
+        }
+        else {
+            luaL_error(L, "expected emit arg,not integer and not string");
+            return 0;
+        }
+    }
+    chain::database* db = (chain::database*)(L->extend.pointer);
+
+    contract_log_operation logs;
+    logs.name = L->extend.contract_name;
+    logs.data = string("{") + key + string(":[") + data + string("]}");
+    db->contract_operation(logs);
+    return 0;
 }
 
 static const luaL_Reg contractlib[] = {
@@ -154,6 +236,7 @@ static const luaL_Reg contractlib[] = {
 	{ "get_data", contract_get_data },
 	{ "get_user_data", contract_get_user_data },
 	{ "transfer", contract_transfer },
+    { "emit", contract_emit },
 	{ nullptr, nullptr }
 };
 

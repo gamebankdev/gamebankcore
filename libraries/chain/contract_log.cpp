@@ -24,12 +24,30 @@ namespace gamebank { namespace chain {
             std::fstream             index_stream;
             fc::path                 block_file;
             fc::path                 index_file;
+            uint32_t                 start_num;
             bool                     block_write = false;
             bool                     index_write = false;
 
             bool                     use_locking = true;
 
             boost::mutex             mtx;
+
+            inline void read_start()
+            {
+               try
+               {
+                  std::fstream tmp_stream;
+                  tmp_stream.open(block_file.generic_string().c_str(), LOG_READ);
+
+                  signed_contract tmp;
+                  fc::raw::unpack(tmp_stream, tmp);
+                  start_num = tmp.block_num() - 1;
+
+                  tmp_stream.close();
+               }
+               FC_LOG_AND_RETHROW()
+            }
+
 
             inline void check_block_read()
             {
@@ -53,6 +71,7 @@ namespace gamebank { namespace chain {
                   {
                      block_stream.close();
                      block_stream.open( block_file.generic_string().c_str(), LOG_WRITE );
+                     block_stream.seekg( 0, std::ios::end );
                      block_write = true;
                   }
                }
@@ -81,9 +100,7 @@ namespace gamebank { namespace chain {
                   {
                      index_stream.close();
                      index_stream.open( index_file.generic_string().c_str(), LOG_WRITE );
-#ifdef _WIN32
-					 index_stream.seekg(0, std::ios::end);//windows版本时，有时这个文件指向不是末尾，这里把文件指向末尾(linux下没出现过这个问题)
-#endif
+					 index_stream.seekg( 0, std::ios::end );
                      index_write = true;
                   }
                }
@@ -142,6 +159,7 @@ namespace gamebank { namespace chain {
 
       if( log_size )
       {
+         my->read_start();
          ilog( "Log is nonempty" );
 		 //从block log读取当前head
          my->head = read_head();
@@ -221,9 +239,12 @@ namespace gamebank { namespace chain {
 
 		 //返回当前位置
          uint64_t pos = my->block_stream.tellp();
-         FC_ASSERT( static_cast<uint64_t>(my->index_stream.tellp()) == sizeof( uint64_t ) * ( b.block_num() - 1 ),
+         if (pos == 0) {
+             my->start_num = b.block_num() - 1;
+         }
+         FC_ASSERT( static_cast<uint64_t>(my->index_stream.tellp()) == sizeof( uint64_t ) * ( b.block_num() - my->start_num - 1 ),
             "Append to index file occuring at wrong position.",
-            ( "position", (uint64_t) my->index_stream.tellp() )( "expected",( b.block_num() - 1 ) * sizeof( uint64_t ) ) );
+            ( "position", (uint64_t) my->index_stream.tellp() )( "expected",( b.block_num() - my->start_num - 1 ) * sizeof( uint64_t ) ) );
 
 		 //序列化区块
 		 auto data = fc::raw::pack_to_vector( b );
@@ -329,10 +350,10 @@ namespace gamebank { namespace chain {
       {
          my->check_index_read();
 
-         if( !( my->head.valid() && block_num <= protocol::block_header::num_from_id( my->head_id ) && block_num > 0 ) )
+         if( !( my->head.valid() && block_num <= protocol::block_header::num_from_id( my->head_id ) && block_num - my->start_num > 0 ) )
             return npos;
 		 //重定位流，当前位置为保存block_num的位置
-         my->index_stream.seekg( sizeof( uint64_t ) * ( block_num - 1 ) );
+         my->index_stream.seekg( sizeof( uint64_t ) * ( block_num - my->start_num - 1 ) );
          uint64_t pos;
 		 //从流当前标记位置读取block_num在索引文件中对应Pos值.
          my->index_stream.read( (char*)&pos, sizeof( pos ) );

@@ -176,6 +176,14 @@ namespace gamebank { namespace protocol {
 
    };
 
+   struct contract_log_operation : public virtual_operation
+   {
+      contract_log_operation() {}
+      contract_log_operation( const string& n, const string& d ) : name( n ), data( d ) {}
+      string           name;
+      string           data;
+   };
+
 } } //gamebank::protocol
 
 FC_REFLECT( gamebank::protocol::author_reward_operation, (author)(permlink)(gbd_payout)(gbc_payout)(vesting_payout) )
@@ -193,3 +201,4 @@ FC_REFLECT( gamebank::protocol::comment_payout_update_operation, (author)(permli
 FC_REFLECT( gamebank::protocol::return_vesting_delegation_operation, (account)(vesting_shares) )
 FC_REFLECT( gamebank::protocol::comment_benefactor_reward_operation, (benefactor)(author)(permlink)(reward) )
 FC_REFLECT( gamebank::protocol::producer_reward_operation, (producer)(vesting_shares) )
+FC_REFLECT( gamebank::protocol::contract_log_operation, (name)(data) );

@@ -89,7 +89,8 @@ namespace gamebank { namespace protocol {
             comment_payout_update_operation,
             return_vesting_delegation_operation,
             comment_benefactor_reward_operation,
-            producer_reward_operation
+            producer_reward_operation,
+            contract_log_operation
          > operation;
 
    /*void operation_get_required_authorities( const operation& op,
