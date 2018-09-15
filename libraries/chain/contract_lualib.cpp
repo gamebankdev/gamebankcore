@@ -74,10 +74,6 @@ static int contract_get_caller(lua_State *L) {
 static int contract_get_data_by_username(lua_State *L, const char* user_name) {
 	// todo: check is load in lua?
 	chain::database* db = (chain::database*)(L->extend.pointer);
-	if (db->find_account(user_name) == nullptr) {
-		luaL_error(L, "expected a real account name");
-		return 0;
-	}
 	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
 	std::string data = contract_data ? to_string(contract_data->data) : "{}";
 	ilog("read contract_data ${contract_name}.${user_name}:${data}", ("contract_name", L->extend.contract_name)("user_name", user_name)("data", data));
@@ -108,6 +104,11 @@ static int contract_get_data(lua_State *L) {
 		return 0;
 	}
 	const char* user_name = L->extend.contract_name;
+	chain::database* db = (chain::database*)(L->extend.pointer);
+	if (db->find_contract(user_name) == nullptr) {
+		luaL_error(L, "expected a real contract name");
+		return 0;
+	}
 	return contract_get_data_by_username(L, user_name);
 }
 
@@ -125,6 +126,11 @@ static int contract_get_user_data(lua_State *L) {
 	const char* user_name = lua_tostring(L, 1);
 	if (user_name == nullptr)
 	{
+		return 0;
+	}
+	chain::database* db = (chain::database*)(L->extend.pointer);
+	if (db->find_account(user_name) == nullptr) {
+		luaL_error(L, "expected a real account name");
 		return 0;
 	}
 	return contract_get_data_by_username(L, user_name);
