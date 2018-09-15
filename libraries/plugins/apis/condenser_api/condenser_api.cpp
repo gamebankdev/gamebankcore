@@ -670,7 +670,7 @@ namespace detail
 			   auto created_disc = discussion_result.discussions;
 			   _state.total_posts = discussion_result.total_post_counts;
 
-			   ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
+			   //ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
                auto& didx = _state.discussion_idx[tag];
 			   
                for( auto& d : created_disc)
@@ -1514,7 +1514,7 @@ namespace detail
 	  auto created_disc = discussion_result.discussions;
 	  _state.total_posts = discussion_result.total_post_counts;
 	  
-	  ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
+	  //ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
 	  auto& didx = _state.discussion_idx[q.tag];
       for( auto& d : created_disc)
       {

@@ -335,7 +335,6 @@ namespace fc
 /**
  *  @brief Checks a condition and throws an assert_exception if the test is FALSE
  */
- // 跟assert()宏功能类似：条件为false时抛异常
 #define FC_ASSERT( TEST, ... ) \
   FC_EXPAND_MACRO( \
     FC_MULTILINE_MACRO_BEGIN \

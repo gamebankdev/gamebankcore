@@ -55,7 +55,7 @@ struct brain_key_info
    public_key_type      pub_key;
    string               wif_priv_key;
 };
-
+//wallet.json
 struct wallet_data
 {
    vector<char>              cipher_keys; /** encrypted keys */
