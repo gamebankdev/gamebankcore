@@ -36,6 +36,7 @@ struct api_comment_object
       parent_permlink( to_string( o.parent_permlink ) ),
       author( o.author ),
       permlink( to_string( o.permlink ) ),
+	  game_name( to_string( o.game_name) ),
       last_update( o.last_update ),
       created( o.created ),
       active( o.active ),
@@ -88,7 +89,7 @@ struct api_comment_object
    string            parent_permlink;
    string            author;
    string            permlink;
-
+   string			 game_name;
    string            title;
    string            body;
    string            json_metadata;
@@ -525,7 +526,7 @@ struct order_book
 } } } // gamebank::plugins::database_api
 
 FC_REFLECT( gamebank::plugins::database_api::api_comment_object,
-             (id)(author)(permlink)
+             (id)(author)(permlink)(game_name)
              (category)(parent_author)(parent_permlink)
              (title)(body)(json_metadata)(last_update)(created)(active)(last_payout)
              (depth)(children)

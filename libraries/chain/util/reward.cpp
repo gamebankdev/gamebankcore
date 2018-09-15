@@ -53,14 +53,15 @@ uint64_t get_rshare_reward( const comment_reward_context& ctx )
    u256 payout_u256 = ( rf * claim ) / total_claims;
    FC_ASSERT( payout_u256 <= u256( uint64_t( std::numeric_limits<int64_t>::max() ) ) );
    uint64_t payout = static_cast< uint64_t >( payout_u256 );
-
-   if( is_comment_payout_dust( ctx.current_gbc_price, payout ) )
-      payout = 0;
-
-   asset max_gbc = to_gbc( ctx.current_gbc_price, ctx.max_gbd );
-
-   payout = std::min( payout, uint64_t( max_gbc.amount.value ) );
-
+   
+   //must consider whether the feed price exists. If don't check the feed price, the payout will return 0
+   if (!ctx.current_gbc_price.is_null())
+   {
+	   if(is_comment_payout_dust(ctx.current_gbc_price, payout) )
+		  payout = 0;
+	   asset max_gbc = to_gbc(ctx.current_gbc_price, ctx.max_gbd);
+	   payout = std::min(payout, uint64_t(max_gbc.amount.value));
+   }
    return payout;
    } FC_CAPTURE_AND_RETHROW( (ctx) )
 }

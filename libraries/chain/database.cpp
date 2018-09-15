@@ -930,16 +930,14 @@ signed_block database::_generate_block(
    )
 {
    uint32_t skip = get_node_properties().skip_flags;
-   //获取区块生产时间槽
+   //由区块生产时间校验当前生产者
    uint32_t slot_num = get_slot_at_time( when );
    FC_ASSERT( slot_num > 0 );
-   //获取指区块生产调度证人
    string scheduled_witness = get_scheduled_witness( slot_num );	
    FC_ASSERT( scheduled_witness == witness_owner );
 
-   //获取witness_object
+   //校验生产者key是否匹配
    const auto& witness_obj = get_witness( witness_owner );
-
    if( !(skip & skip_witness_signature) )
       FC_ASSERT( witness_obj.signing_key == block_signing_private_key.get_public_key() );
 
@@ -966,22 +964,20 @@ signed_block database::_generate_block(
 
    uint64_t postponed_tx_count = 0;		//因交易尺寸过大而未添加到区块的交易数
 
-   // pop pending state (reset to head block state)
-   //循环处理_pending_tx队列中的所有交易, 且只处理未过期的交易并添加到pending_block
+   //打包交易:
+   //- 如果交易会导致区块超过最大尺寸限制，则不打包
+   //- 如果交易过期，则不打包
    //_pending_tx 由@see _push_transaction产生，即提交给见证人处理的交易
    for( const signed_transaction& tx : _pending_tx )
    {
       // Only include transactions that have not expired yet for currently generating block,
       // this should clear problem transactions and allow block production to continue
-
-      //判断_pending_tx中的交易是否过期
       if( tx.expiration < when )
          continue;
 
       uint64_t new_total_size = total_block_size + fc::raw::pack_size( tx );
 
       // postpone transaction if it would make block too big
-      //判断交易尺寸大小
       if( new_total_size >= maximum_block_size )
       {
          postponed_tx_count++;
@@ -994,9 +990,7 @@ signed_block database::_generate_block(
          _apply_transaction( tx );
          temp_session.squash();
 
-		 //更新当前区块大小
          total_block_size += fc::raw::pack_size( tx );
-		 //打包交易: 把交易从_pending_tx放入区块
          pending_block.transactions.push_back( tx );
       }
       catch ( const fc::exception& e )
@@ -1020,39 +1014,39 @@ signed_block database::_generate_block(
    // However, the push_block() call below will re-create the
    // _pending_tx_session.
 
-   pending_block.previous = head_block_id();		// 从全局属性获取的当前head id
-   pending_block.timestamp = when;					//添加时间戳
-   pending_block.transaction_merkle_root = pending_block.calculate_merkle_root();	//添加交易树根
-   pending_block.witness = witness_owner;			//更新证人id
+	pending_block.previous = head_block_id();		
+	pending_block.timestamp = when;					
+	pending_block.transaction_merkle_root = pending_block.calculate_merkle_root();	
+	pending_block.witness = witness_owner;
 
-      const auto& witness = get_witness( witness_owner );
+    const auto& witness = get_witness( witness_owner );
 
-      if( witness.running_version != GAMEBANK_BLOCKCHAIN_VERSION )
-         pending_block.extensions.insert( block_header_extensions( GAMEBANK_BLOCKCHAIN_VERSION ) );
+    if( witness.running_version != GAMEBANK_BLOCKCHAIN_VERSION )
+        pending_block.extensions.insert( block_header_extensions( GAMEBANK_BLOCKCHAIN_VERSION ) );
 
-      const auto& hfp = get_hardfork_property_object();
+    const auto& hfp = get_hardfork_property_object();
 
-      if( hfp.current_hardfork_version < GAMEBANK_BLOCKCHAIN_VERSION // Binary is newer hardfork than has been applied
-         && ( witness.hardfork_version_vote != _hardfork_versions[ hfp.last_hardfork + 1 ] || witness.hardfork_time_vote != _hardfork_times[ hfp.last_hardfork + 1 ] ) ) // Witness vote does not match binary configuration
-      {
-         // Make vote match binary configuration
-         pending_block.extensions.insert( block_header_extensions( hardfork_version_vote( _hardfork_versions[ hfp.last_hardfork + 1 ], _hardfork_times[ hfp.last_hardfork + 1 ] ) ) );
-      }
-      else if( hfp.current_hardfork_version == GAMEBANK_BLOCKCHAIN_VERSION // Binary does not know of a new hardfork
-         && witness.hardfork_version_vote > GAMEBANK_BLOCKCHAIN_VERSION ) // Voting for hardfork in the future, that we do not know of...
-      {
-         // Make vote match binary configuration. This is vote to not apply the new hardfork.
-         pending_block.extensions.insert( block_header_extensions( hardfork_version_vote( _hardfork_versions[ hfp.last_hardfork ], _hardfork_times[ hfp.last_hardfork ] ) ) );
-      }
+    if( hfp.current_hardfork_version < GAMEBANK_BLOCKCHAIN_VERSION // Binary is newer hardfork than has been applied
+        && ( witness.hardfork_version_vote != _hardfork_versions[ hfp.last_hardfork + 1 ] || witness.hardfork_time_vote != _hardfork_times[ hfp.last_hardfork + 1 ] ) ) // Witness vote does not match binary configuration
+    {
+        // Make vote match binary configuration
+        pending_block.extensions.insert( block_header_extensions( hardfork_version_vote( _hardfork_versions[ hfp.last_hardfork + 1 ], _hardfork_times[ hfp.last_hardfork + 1 ] ) ) );
+    }
+    else if( hfp.current_hardfork_version == GAMEBANK_BLOCKCHAIN_VERSION // Binary does not know of a new hardfork
+        && witness.hardfork_version_vote > GAMEBANK_BLOCKCHAIN_VERSION ) // Voting for hardfork in the future, that we do not know of...
+    {
+        // Make vote match binary configuration. This is vote to not apply the new hardfork.
+        pending_block.extensions.insert( block_header_extensions( hardfork_version_vote( _hardfork_versions[ hfp.last_hardfork ], _hardfork_times[ hfp.last_hardfork ] ) ) );
+    }
 
 
-   //区块签名
+   //sign block by private key
    if( !(skip & skip_witness_signature) )
       pending_block.sign( block_signing_private_key );
 
    // TODO:  Move this to _push_block() so session is restored.
 
-   //检查区块大小
+   //再次检查区块大小
    if( !(skip & skip_block_size_check) )
    {
       FC_ASSERT( fc::raw::pack_size(pending_block) <= GAMEBANK_MAX_BLOCK_SIZE );
@@ -1292,17 +1286,6 @@ std::pair< asset, asset > database::create_gbd( const account_object& to_account
  * @param to_account - the account to receive the new vesting shares
  * @param liquid     - GBC to be converted to vesting shares
  */
- //1 power up时会调用此函数@see transfer_to_vesting_evaluator::do_apply
- //用户使用GBC购买GBS
- //to_account有可能是支付GBC的账户
- //liquid: 用户使用多少GBC转换为GBS
-
-//2 process_funds会调用，用于奖励生产新区块的见证人
-//to_account: 新区块见证人账号
-//liquid：witness_rewards.见证人分配到的新增gamebank份额
-
-//3 cashout_comment_helper会调用，奖励给post作者的SP份额
-//liquid：奖励给作者的GBC计价数量（会根据汇率转为GBS）
 asset database::create_vesting( const account_object& to_account, asset liquid, bool to_reward_balance )
 {
    try
@@ -1327,14 +1310,10 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
          return new_vesting;
          };
 
- 		//必须是GBC to GBS
       FC_ASSERT( liquid.symbol == GBC_SYMBOL );
       // ^ A novelty, needed but risky in case someone managed to slip GBD/GBC here in blockchain history.
       // Get share price.
       const auto& cprops = get_dynamic_global_properties();
-	  //POWER UP时to_reward_balance为false
-	  //to_reward_balance默认为false
-
       price vesting_share_price = to_reward_balance ? cprops.get_reward_vesting_share_price() : cprops.get_vesting_share_price();
 	  // Calculate new vesting from provided liquid using share price.
       asset new_vesting = calculate_new_vesting( vesting_share_price );
@@ -1349,13 +1328,13 @@ asset database::create_vesting( const account_object& to_account, asset liquid, 
       {
          if( to_reward_balance )
          {
-            props.pending_rewarded_vesting_shares += new_vesting;//GBS
-            props.pending_rewarded_vesting_gbc += liquid;	//GBC
+            props.pending_rewarded_vesting_shares += new_vesting;
+            props.pending_rewarded_vesting_gbc += liquid;	
          }
          else
          {
-            props.total_vesting_fund_gbc += liquid;//total_vesting_fund_gbc代表SP持有者奖励池.这里需要增加
-            props.total_vesting_shares += new_vesting;//区块链总的GBS
+            props.total_vesting_fund_gbc += liquid;
+            props.total_vesting_shares += new_vesting;
          }
       } );
       // Update witness voting numbers.
@@ -2266,32 +2245,6 @@ asset database::get_curation_reward()const
    return std::max( percent, GAMEBANK_MIN_CURATE_REWARD );
 }
 
-//区块生产奖励：每区块1gbc或者每年增发总量的0.750%
-asset database::get_producer_reward()
-{
-   const auto& props = get_dynamic_global_properties();
-   static_assert( GAMEBANK_BLOCK_INTERVAL == 3, "this code assumes a 3-second time interval" );
-   asset percent( protocol::calc_percent_reward_per_block< GAMEBANK_PRODUCER_APR_PERCENT >( props.virtual_supply.amount ), GBC_SYMBOL);
-   auto pay = std::max( percent, GAMEBANK_MIN_PRODUCER_REWARD );
-   const auto& witness_account = get_account( props.current_witness );
-
-   /// pay witness in vesting shares
-   if( props.head_block_number >= GAMEBANK_START_MINER_VOTING_BLOCK || (witness_account.vesting_shares.amount.value == 0) ) {
-      // const auto& witness_obj = get_witness( props.current_witness );
-      const auto& producer_reward = create_vesting( witness_account, pay );
-      push_virtual_operation( producer_reward_operation( witness_account.name, producer_reward ) );
-   }
-   else
-   {
-      modify( get_account( witness_account.name), [&]( account_object& a )
-      {
-         a.balance += pay;
-      } );
-   }
-
-   return pay;
-}
-
 asset database::get_pow_reward()const
 {
    const auto& props = get_dynamic_global_properties();
@@ -3091,11 +3044,10 @@ void database::_apply_block( const signed_block& next_block )
       }
    }
 
-   //验证block_header,返回db中的witness_object
+   //验证block_header
    const witness_object& signing_witness = validate_block_header(skip, next_block);
 
    const auto& gprops = get_dynamic_global_properties();
-   //验证区块尺寸
    auto block_size = fc::raw::pack_size( next_block );
 
    FC_ASSERT( block_size <= gprops.maximum_block_size, "Block Size is too Big", ("next_block_num",next_block_num)("block_size", block_size)("max",gprops.maximum_block_size) );
@@ -3109,8 +3061,7 @@ void database::_apply_block( const signed_block& next_block )
 
    /// modify current witness so transaction evaluators can know who included the transaction,
    /// this is mostly for POW operations which must pay the current_witness
-   //  更新全局属性中的当前生产区块的见证人
-   //  dynamic_global_property_object中的current_witness需实时更新为区块生产者，以便pow operations支付收益
+   /// current_witness需实时更新为区块生产者，以便pow operations支付收益
    modify( gprops, [&]( dynamic_global_property_object& dgp ){
       dgp.current_witness = next_block.witness;
    });
@@ -3391,8 +3342,7 @@ void database::_apply_transaction(const signed_transaction& trx)
 
    uint32_t skip = get_node_properties().skip_flags;
 
-   //operation_validate
-   //验证交易中所有操作
+   //operation_validate,call *_operation::validate()
    if( !(skip&skip_validate) )   /* issue #505 explains why this skip_flag is disabled */
       trx.validate();
 
@@ -3452,7 +3402,6 @@ void database::_apply_transaction(const signed_transaction& trx)
    }
 
    //Insert transaction into unique transactions database.
-   //将验证过权限的交易和签名合法的交易放入transaction_index
    if( !(skip & skip_transaction_dupe_check) )
    {
       create<transaction_object>([&](transaction_object& transaction) {
@@ -3648,15 +3597,12 @@ boost::signals2::connection database::add_update_bandwidth_handler(const bandwid
 
 
 //@see _apply_block
-//验证新区块的block_header
 const witness_object& database::validate_block_header( uint32_t skip, const signed_block& next_block )const
 { try {
-   //验证head_block_id
    FC_ASSERT( head_block_id() == next_block.previous, "", ("head_block_id",head_block_id())("next.prev",next_block.previous) );
-   //验证timestamp
    FC_ASSERT( head_block_time() < next_block.timestamp, "", ("head_block_time",head_block_time())("next",next_block.timestamp)("blocknum",next_block.block_num()) );
 
-   //见证人的signing_key是否能够验证新区块的签名
+   //get the producer of this block
    const witness_object& witness = get_witness( next_block.witness );
 
    if( !(skip&skip_witness_signature) )
@@ -3785,9 +3731,6 @@ void database::update_virtual_supply()
    });
 } FC_CAPTURE_AND_RETHROW() }
 
-//called by _apply_block
-//signing_witness:区块生产者
-//new_block: 新生产的区块
 void database::update_signing_witness(const witness_object& signing_witness, const signed_block& new_block)
 { try {
    if(signing_witness.last_confirmed_block_num > new_block.block_num() )
@@ -3833,8 +3776,6 @@ void database::update_last_irreversible_block()
 
    /**
     * Prior to voting taking over, we must be more conservative...
-    * 每一轮21个见证人最多生成21个区块，这里保守的确定将上一轮生成的最后一个区块做持久化
-    * 而不是立即持久化最新生成的区块
     */
    if( head_block_num() < GAMEBANK_START_MINER_VOTING_BLOCK )
    {
@@ -3842,13 +3783,12 @@ void database::update_last_irreversible_block()
       modify( dpo, [&]( dynamic_global_property_object& _dpo )
       {
          if ( head_block_num() > GAMEBANK_MAX_WITNESSES )
-			//每一轮21个见证人最多生成21个区块，这里保守的确定将上一轮生成的最后一个区块做持久化
+			//每一轮21个见证人最多生成21个区块，固化直到区块编号为(当前区块-21)的区块
             _dpo.last_irreversible_block_num = head_block_num() - GAMEBANK_MAX_WITNESSES;
       } );
    }
    else
    {
-     //生产区块超过1个月
       const witness_schedule_object& wso = get_witness_schedule_object();
 
       vector< const witness_object* > wit_objs;
@@ -3863,7 +3803,7 @@ void database::update_last_irreversible_block()
       // 1 1 1 1 1 1 1 2 2 2 -> 1
       // 3 3 3 3 3 3 3 3 3 3 -> 3
 
-		//4分之一 size
+		//25% of witnesses
       size_t offset = ((GAMEBANK_100_PERCENT - GAMEBANK_IRREVERSIBLE_THRESHOLD) * wit_objs.size() / GAMEBANK_100_PERCENT);
 
 	  // [begin,offset) < offset < (offset,end)//offset的左边所有见证人的最新生产的区块编号均小于offset右边所有见证人最新生产的区块编号
@@ -4188,19 +4128,19 @@ void database::reclaim_account_creation_delegations()
 	auto itr = didx.lower_bound(GAMEBANK_INIT_MINER_NAME);
 	while (itr != didx.end() && itr->delegator == GAMEBANK_INIT_MINER_NAME && itr->min_delegation_time < now)
 	{
-			modify(get_account(itr->delegatee), [&](account_object& a)
-			{
-				a.received_vesting_shares -= itr->vesting_shares;
-			});
-			create< vesting_delegation_expiration_object >([&](vesting_delegation_expiration_object& obj)
-			{
-				obj.delegator = itr->delegator;
-				obj.vesting_shares = itr->vesting_shares;
-				obj.expiration = std::max(now + get_dynamic_global_properties().delegation_return_period, itr->min_delegation_time);
-			});
-			const auto &current = *itr;
-			remove(current);
-			itr++;
+		modify(get_account(itr->delegatee), [&](account_object& a)
+		{
+			a.received_vesting_shares -= itr->vesting_shares;
+		});
+		create< vesting_delegation_expiration_object >([&](vesting_delegation_expiration_object& obj)
+		{
+			obj.delegator = itr->delegator;
+			obj.vesting_shares = itr->vesting_shares;
+			obj.expiration = std::max(now + get_dynamic_global_properties().delegation_return_period, itr->min_delegation_time);
+		});
+		const auto &current = *itr;
+		remove(current);
+		itr++;
 	}	
 }
 

@@ -48,7 +48,7 @@ namespace gamebank { namespace chain {
       public:
          template< typename Constructor, typename Allocator >
          comment_object( Constructor&& c, allocator< Allocator > a )
-            :category( a ), parent_permlink( a ), permlink( a ), beneficiaries( a )
+            :category( a ), parent_permlink( a ), permlink( a ), game_name( a ), beneficiaries( a )
          {
             c( *this );
          }
@@ -60,7 +60,7 @@ namespace gamebank { namespace chain {
          shared_string     parent_permlink;
          account_name_type author;
          shared_string     permlink;
-
+		 shared_string	   game_name;
          time_point_sec    last_update;
          time_point_sec    created;
          time_point_sec    active; ///< the last time this post was "touched" by voting or reply
@@ -256,7 +256,7 @@ namespace gamebank { namespace chain {
 } } // gamebank::chain
 
 FC_REFLECT( gamebank::chain::comment_object,
-             (id)(author)(permlink)
+             (id)(author)(permlink)(game_name)
              (category)(parent_author)(parent_permlink)
              (last_update)(created)(active)(last_payout)
              (depth)(children)

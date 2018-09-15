@@ -6,7 +6,7 @@
 #include <fc/network/ip.hpp>
 
 namespace graphene { namespace net {
-
+//@see data/node_config.json
 struct node_configuration
 {
    node_configuration() {}

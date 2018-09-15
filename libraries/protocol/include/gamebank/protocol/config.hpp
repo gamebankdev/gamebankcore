@@ -15,7 +15,6 @@
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1451606400))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1451606400))
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60*24*7) /// 7 days
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD (GAMEBANK_CASHOUT_WINDOW_SECONDS)
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*3) /// 3 days
 #define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24) /// 1 day
 #define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::minutes(5))
@@ -45,7 +44,6 @@
 
 #define GAMEBANK_GENESIS_TIME                    (fc::time_point_sec(1458835200))
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1458838800))
-#define GAMEBANK_CASHOUT_WINDOW_SECONDS_OLD (60*60*12)    /// 12 hours
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60*24*7)  /// 7 days
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*30) /// 30 days
 #define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24*14) /// 2 weeks

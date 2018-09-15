@@ -260,6 +260,7 @@ struct api_comment_object
       parent_permlink( c.parent_permlink ),
       author( c.author ),
       permlink( c.permlink ),
+	  game_name(c.game_name),
       title( c.title ),
       body( c.body ),
       json_metadata( c.json_metadata ),
@@ -303,7 +304,7 @@ struct api_comment_object
    string            parent_permlink;
    string            author;
    string            permlink;
-
+   string			 game_name;
    string            title;
    string            body;
    string            json_metadata;
@@ -744,7 +745,7 @@ struct state
    legacy_price                                       feed_price;
    string                                             error;
 
-   uint32_t											total_posts;
+   uint32_t											total_posts = 0;
 };
 
 struct scheduled_hardfork
@@ -1223,7 +1224,7 @@ FC_REFLECT_DERIVED( gamebank::plugins::condenser_api::extended_account, (gameban
             (vesting_balance)(reputation)(transfer_history)(market_history)(post_history)(vote_history)(other_history)(witness_votes)(tags_usage)(guest_bloggers)(open_orders)(comments)(feed)(blog)(recent_replies)(recommended) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::api_comment_object,
-             (id)(author)(permlink)
+             (id)(author)(permlink)(game_name)
              (category)(parent_author)(parent_permlink)
              (title)(body)(json_metadata)(last_update)(created)(active)(last_payout)
              (depth)(children)

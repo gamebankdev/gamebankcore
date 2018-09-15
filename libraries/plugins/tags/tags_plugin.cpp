@@ -153,7 +153,7 @@ comment_metadata tags_plugin_impl::filter_tags( const comment_object& c, const c
       try
       {
          meta = fc::json::from_string( to_string( con.json_metadata ) ).as< comment_metadata >();
-		 ilog("meta.tags.size ${s}", ("s", meta.tags.size()));
+		 //ilog("meta.tags.size ${s}", ("s", meta.tags.size()));
       }
       catch( const fc::exception& e )
       {
@@ -161,30 +161,25 @@ comment_metadata tags_plugin_impl::filter_tags( const comment_object& c, const c
 		  elog("exception e${e}", ("e", e));
       }
    } 
-   // We need to write the transformed tags into a temporary
-   // local container because we can't modify meta.tags concurrently
-   // as we iterate over it.
-   set< string > lower_tags;
-
-   uint8_t tag_limit = 5;
-   uint8_t count = 0;
-   for( const string& tag : meta.tags )
+  
+   //fetch game_name and remove from meta
+   if (meta.tags.size() > 1) 
    {
-      ++count;
-      if( count > tag_limit || lower_tags.size() > tag_limit )
-         break;
-      if( tag == "" )
-         continue;
-      lower_tags.insert( fc::to_lower( tag ) );
+	   auto itr = meta.tags.rbegin();
+	   string game_name = *itr;
+	   _db.modify(c, [&](comment_object &co)
+	   {
+		   from_string(co.game_name, game_name);
+	   });
+	   meta.tags.erase(game_name);
    }
-
+   
    /// the universal tag applies to everything safe for work or nsfw with a non-negative payout
-   if( c.net_rshares >= 0 )
+   /*if( c.net_rshares >= 0 )
    {
-      lower_tags.insert( string() ); /// add it to the universal tag
+	   game_id.insert( string() ); /// add it to the universal tag
    }
-
-   meta.tags = lower_tags; /// TODO: std::move???
+   */
 
    return meta;
 }
@@ -209,7 +204,7 @@ void tags_plugin_impl::update_tag( const tag_object& current, const comment_obje
       add_stats( current, stats );
     } else {
 		//该评论已经过了支付时间
-		ilog("!! don't remove tag_object tag${t} here", ("t", current.tag));
+	//	ilog("!! don't remove tag_object tag${t} here", ("t", current.tag));
         //_db.remove( current );
     }
 }
@@ -221,7 +216,7 @@ void tags_plugin_impl::create_tag( const string& tag, const comment_object& comm
 
    if( comment.parent_author.size() )
       parent = _db.get_comment( comment.parent_author, comment.parent_permlink ).id;
-   ilog("create new tag${t} for author_id${id}", ("t", tag)("id", author));
+   //ilog("create new tag ${t} for author_id ${id}", ("t", tag)("id", author));
    const auto& tag_obj = _db.create<tag_object>( [&]( tag_object& obj )
    {
        obj.tag               = tag;
@@ -384,7 +379,7 @@ struct operation_visitor
    {
       if( _my._started )
       {
-		  ilog("call update_tags in operator comment_operation, metadata size${size}", ("size", op.json_metadata.size()));
+		  //ilog("call update_tags in operator comment_operation, metadata size${size}", ("size", op.json_metadata.size()));
          _my.update_tags( _my._db.get_comment( op.author, op.permlink ), op.json_metadata.size() );
       }
    }

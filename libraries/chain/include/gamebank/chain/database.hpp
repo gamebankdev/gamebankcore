@@ -398,7 +398,6 @@ namespace gamebank { namespace chain {
 
          asset get_liquidity_reward()const;
          asset get_content_reward()const;
-         asset get_producer_reward();
          asset get_curation_reward()const;
          asset get_pow_reward()const;
 

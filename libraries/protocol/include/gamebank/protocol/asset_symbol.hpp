@@ -28,7 +28,7 @@
   (((GB_MAX_NAI + GAMEBANK_NAI_GBS) << GAMEBANK_ASSET_SYMBOL_PRECISION_BITS) | GAMEBANK_PRECISION_GBS)
 
 
-#define GBS_SYMBOL_U64  (uint64_t('G') | (uint64_t('B') << 8) | (uint64_t('S') << 16))
+#define GBS_SYMBOL_U64  (uint64_t('G') | (uint64_t('B') << 8) | (uint64_t('P') << 16))
 //#define GBC_SYMBOL_U64  (uint64_t('G') | (uint64_t('B') << 8) | (uint64_t('C') << 16))
 #define GBC_SYMBOL_U64  (uint64_t('G') | (uint64_t('B') << 8))
 #define GBD_SYMBOL_U64    (uint64_t('G') | (uint64_t('B') << 8) | (uint64_t('D') << 16))
