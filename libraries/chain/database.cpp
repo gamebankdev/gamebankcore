@@ -382,6 +382,13 @@ optional<signed_contract> database::fetch_contract_by_id( const block_id_type& i
 
 optional<signed_contract> database::fetch_contract_by_number( uint32_t block_num )const
 { try {
+   auto results = _fork_db.fetch_block_by_number(block_num);
+   if (results.size() == 1) {
+      auto itr = _contract_block.find(block_num);
+      if (itr != _contract_block.end()) {
+          return itr->second;
+      }
+   }
    return _contract_log.read_block_by_num(block_num);
 } FC_LOG_AND_RETHROW() }
 
