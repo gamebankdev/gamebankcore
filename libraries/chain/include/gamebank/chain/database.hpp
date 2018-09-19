@@ -476,6 +476,7 @@ namespace gamebank { namespace chain {
          void check_free_memory( bool force_print, uint32_t current_block_num );
 
          void contract_operation( const operation &op ) { _contract_operation.push_back(op); }
+         void contract_return(const string& ret) { _contract_return[_contract_trxid] = ret; }
 
 #ifdef IS_TEST_NET
          bool liquidity_rewards_enabled = true;
@@ -536,8 +537,10 @@ namespace gamebank { namespace chain {
          block_log                     _block_log;
          contract_log                  _contract_log;
 
+         transaction_id_type                      _contract_trxid;
          vector<operation>                        _contract_operation;
          flat_map<uint64_t, signed_contract>      _contract_block;
+         flat_map<transaction_id_type, string>    _contract_return;
 
          // this function needs access to _plugin_index_signal
          template< typename MultiIndexType >

@@ -42,7 +42,7 @@ namespace detail
             _db( _chain.db() )
          {
             _on_post_apply_block_conn = _db.add_post_apply_block_handler(
-               [&]( const block_notification& note ){ on_post_apply_block( note.block ); },
+               [&]( const block_notification& note ){ on_post_apply_block( note ); },
                appbase::app().get_plugin< gamebank::plugins::condenser_api::condenser_api_plugin >(),
                0 );
          }
@@ -147,7 +147,7 @@ namespace detail
 
          void set_pending_payout( discussion& d );
 
-         void on_post_apply_block( const signed_block& b );
+         void on_post_apply_block( const block_notification& note );
 
          gamebank::plugins::chain::chain_plugin&                              _chain;
 
@@ -2302,8 +2302,10 @@ namespace detail
          d.url += "#@" + d.author + "/" + d.permlink;
    }
 
-   void condenser_api_impl::on_post_apply_block( const signed_block& b )
-   { try {
+   void condenser_api_impl::on_post_apply_block( const block_notification& note )
+   { 
+      const signed_block &b = note.block;
+   try {
       boost::lock_guard< boost::mutex > guard( _mtx );
       int32_t block_num = int32_t(b.block_num());
       if( _callbacks.size() )
@@ -2314,7 +2316,10 @@ namespace detail
             auto id = trx.id();
             auto itr = _callbacks.find( id );
             if( itr == _callbacks.end() ) continue;
-            itr->second( broadcast_transaction_synchronous_return( id, block_num, int32_t( trx_num ), false ) );
+            string contract_return;
+            auto itr_ret = note.contract_return.find(id);
+            if (itr_ret != note.contract_return.end()) contract_return = itr_ret->second;
+            itr->second( broadcast_transaction_synchronous_return( id, block_num, int32_t( trx_num ), false, contract_return) );
             _callbacks.erase( itr );
          }
       }
@@ -2336,7 +2341,7 @@ namespace detail
 
             confirmation_callback callback = cb_it->second;
             transaction_id_type txid_byval = txid;    // can't pass in by reference as it's going to be deleted
-            callback( broadcast_transaction_synchronous_return( txid_byval, block_num, -1, true ) );
+            callback( broadcast_transaction_synchronous_return( txid_byval, block_num, -1, true, "" ) );
 
             _callbacks.erase( cb_it );
          }

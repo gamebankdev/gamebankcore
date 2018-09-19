@@ -3090,6 +3090,7 @@ void database::_apply_block( const signed_block& next_block )
    sc.block_id = next_block.id();
    sc.signing_key = next_block.signee();
    _contract_operation.clear();
+   _contract_return.clear();
    //apply区块中的所有交易
    for( const auto& trx : next_block.transactions )
    {
@@ -3099,16 +3100,18 @@ void database::_apply_block( const signed_block& next_block )
        * for transactions when validating broadcast transactions or
        * when building a block.
        */
+      _contract_trxid = trx.id();
       apply_transaction( trx, skip );
       ++_current_trx_in_block;
       contract_transaction ctx;
-      ctx.transaction_id = trx.id();
+      ctx.transaction_id = _contract_trxid;
       ctx.ref_block_num = trx.ref_block_num;
       ctx.ref_block_prefix = trx.ref_block_prefix;
       ctx.operations.swap( _contract_operation );
       sc.transactions.push_back(ctx);
    }
    _contract_block[next_block.block_num()] = sc;
+   note.contract_return.swap(_contract_return);
 
    _current_trx_in_block = -1;
    _current_op_in_trx = 0;

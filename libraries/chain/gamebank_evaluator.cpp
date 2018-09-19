@@ -2601,6 +2601,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
 
 		std::string result;
 		FC_ASSERT( contract.call_method(op.method, op_args, result), "call method error" );
+		_db.contract_return(result);
 
 		// todo: update account bandwith
 		int current_opcount = contract.get_current_opcount();

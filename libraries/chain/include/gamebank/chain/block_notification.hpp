@@ -13,8 +13,9 @@ struct block_notification
    }
 
    gamebank::protocol::block_id_type          block_id;
-   uint32_t                                block_num = 0;
+   uint32_t                                   block_num = 0;
    const gamebank::protocol::signed_block&    block;
+   flat_map<transaction_id_type, string>      contract_return;
 };
 
 } }

@@ -790,13 +790,14 @@ typedef vector< variant > broadcast_transaction_synchronous_args;
 struct broadcast_transaction_synchronous_return
 {
    broadcast_transaction_synchronous_return() {}
-   broadcast_transaction_synchronous_return( transaction_id_type txid, int32_t bn, int32_t tn, bool ex )
-   : id(txid), block_num(bn), trx_num(tn), expired(ex) {}
+   broadcast_transaction_synchronous_return( transaction_id_type txid, int32_t bn, int32_t tn, bool ex, const string& cr )
+   : id(txid), block_num(bn), trx_num(tn), expired(ex), contract_return(cr) {}
 
    transaction_id_type   id;
    int32_t               block_num = 0;
    int32_t               trx_num   = 0;
    bool                  expired   = false;
+   string                contract_return;
 };
 
 struct comment_feed_entry
@@ -1341,7 +1342,7 @@ FC_REFLECT( gamebank::plugins::condenser_api::get_version_return,
             (blockchain_version)(gamebank_revision)(fc_revision) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::broadcast_transaction_synchronous_return,
-            (id)(block_num)(trx_num)(expired) )
+            (id)(block_num)(trx_num)(expired)(contract_return) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::comment_feed_entry,
             (comment)(reblog_by)(reblog_on)(entry_id) )
