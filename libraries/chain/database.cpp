@@ -2970,7 +2970,7 @@ void database::_apply_block( const signed_block& next_block )
    //block_notification≥…‘±: id,num,signed_block
    block_notification note( next_block );
 
-   notify_pre_apply_block( note );	// _dupe_customs.clear();£ø
+   notify_pre_apply_block( note );	
 
    const uint32_t next_block_num = note.block_num;
 

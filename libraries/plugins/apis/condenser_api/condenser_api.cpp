@@ -680,7 +680,11 @@ namespace detail
                {
                   string key = d.author + "/" + d.permlink;
                   didx.created.push_back( key );
-				  recursively_fetch_content(_state, d, accounts);
+				  //debug: don't return the comments of the post 
+				  d.replies_count = _tags_api->get_content_replies({ d.author, d.permlink }).discussions.size();
+				  ilog("=====>d${a}_${p} replies_count = ${c}", ("a", d.author)("p", d.permlink)("c", d.replies_count));
+				  if (d.author.size()) accounts.insert(d.author);
+				  //recursively_fetch_content(_state, d, accounts);
                   _state.content[key] = std::move(d);
                }
             }
@@ -1541,13 +1545,24 @@ namespace detail
 	  
 	  //ilog("created_dis size ${s}, total_post_counts is ${t}", ("s", created_disc.size())("t", _state.total_posts));
 	  auto& didx = _state.discussion_idx[q.tag];
-      for( auto& d : created_disc)
+      /*for( auto& d : created_disc)
       {
 		 string key = d.author + "/" + d.permlink;
 		 didx.created.push_back(key);
 		 recursively_fetch_content(_state, d, accounts);
 		 _state.content[key] = std::move(d);
-      }
+      }*/
+	  for (auto& d : created_disc)
+	  {
+		  string key = d.author + "/" + d.permlink;
+		  didx.created.push_back(key);
+		  //debug: don't return the comments of the post 
+		  d.replies_count = _tags_api->get_content_replies({ d.author, d.permlink }).discussions.size();
+		  ilog("=====>d${a}_${p} replies_count = ${c}", ("a", d.author)("p", d.permlink)("c", d.replies_count));
+		  if (d.author.size()) accounts.insert(d.author);
+		  _state.content[key] = std::move(d);
+	  }
+
 
 	  for (const auto& a : accounts)
 	  {
@@ -2215,7 +2230,6 @@ namespace detail
 		  //All participants in the discussion
          if( root.author.size() )
             referenced_accounts.insert( root.author );
-
          if( _tags_api )
          {
 			 //get all the comments below the author and recursively return each comment to its next level until no reply is received

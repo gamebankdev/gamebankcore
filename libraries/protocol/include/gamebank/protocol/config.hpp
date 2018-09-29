@@ -16,7 +16,7 @@
 #define GAMEBANK_MINING_TIME                     (fc::time_point_sec(1451606400))
 #define GAMEBANK_CASHOUT_WINDOW_SECONDS          (60*60*24*7) /// 7 days
 #define GAMEBANK_SECOND_CASHOUT_WINDOW           (60*60*24*3) /// 3 days
-#define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24) /// 1 day
+#define GAMEBANK_MAX_CASHOUT_WINDOW_SECONDS      (60*60*24*14) /// 14 days
 #define GAMEBANK_UPVOTE_LOCKOUT_TIME             (fc::minutes(5))
 
 
@@ -57,7 +57,7 @@
 #define GAMEBANK_OWNER_AUTH_HISTORY_TRACKING_START_BLOCK_NUM 3186477
 
 #define GAMEBANK_INIT_SUPPLY                     int64_t(0)
-
+#define GAMEBANK_INIT_VESTING_SUPPLY_PERCENT	 (10 * GAMEBANK_1_PERCENT) 
 #endif
 
 #define GBS_SYMBOL  (gamebank::protocol::asset_symbol_type::from_asset_num( GAMEBANK_ASSET_NUM_GBS ) )

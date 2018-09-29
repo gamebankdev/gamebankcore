@@ -68,6 +68,7 @@ struct discussion : public database_api::api_comment_object
    vector< account_name_type >   reblogged_by;
    optional< account_name_type > first_reblogged_by;
    optional< time_point_sec >    first_reblogged_on;
+   uint16_t						 replies_count = 0;
 };
 
 struct get_trending_tags_args
@@ -247,7 +248,7 @@ FC_REFLECT( gamebank::plugins::tags::vote_state,
             (voter)(weight)(rshares)(percent)(reputation)(time) )
 
 FC_REFLECT_DERIVED( gamebank::plugins::tags::discussion, (gamebank::plugins::database_api::api_comment_object),
-            (url)(root_title)(pending_payout_value)(total_pending_payout_value)(active_votes)(replies)(author_reputation)(promoted)(body_length)(reblogged_by)(first_reblogged_by)(first_reblogged_on) )
+            (url)(root_title)(pending_payout_value)(total_pending_payout_value)(active_votes)(replies)(author_reputation)(promoted)(body_length)(reblogged_by)(first_reblogged_by)(first_reblogged_on)(replies_count))
 
 FC_REFLECT( gamebank::plugins::tags::get_trending_tags_args,
             (start_tag)(limit) )

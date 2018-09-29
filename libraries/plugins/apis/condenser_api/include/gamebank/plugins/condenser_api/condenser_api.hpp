@@ -663,20 +663,21 @@ struct discussion : public api_comment_object
 
    discussion( const api_comment_object& c ) : api_comment_object( c ) {}
 
-   discussion( const tags::discussion& d ) :
-      api_comment_object( d ),
-      url( d.url ),
-      root_title( d.root_title ),
-      pending_payout_value( legacy_asset::from_asset( d.pending_payout_value ) ),
-      total_pending_payout_value( legacy_asset::from_asset( d.total_pending_payout_value ) ),
-      active_votes( d.active_votes ),
-      replies( d.replies ),
-      author_reputation( d.author_reputation ),
-      promoted( legacy_asset::from_asset( d.promoted ) ),
-      body_length( d.body_length ),
-      reblogged_by( d.reblogged_by ),
-      first_reblogged_by( d.first_reblogged_by ),
-      first_reblogged_on( d.first_reblogged_on )
+   discussion(const tags::discussion& d) :
+	   api_comment_object(d),
+	   url(d.url),
+	   root_title(d.root_title),
+	   pending_payout_value(legacy_asset::from_asset(d.pending_payout_value)),
+	   total_pending_payout_value(legacy_asset::from_asset(d.total_pending_payout_value)),
+	   active_votes(d.active_votes),
+	   replies(d.replies),
+	   author_reputation(d.author_reputation),
+	   promoted(legacy_asset::from_asset(d.promoted)),
+	   body_length(d.body_length),
+	   reblogged_by(d.reblogged_by),
+	   first_reblogged_by(d.first_reblogged_by),
+	   first_reblogged_on(d.first_reblogged_on),
+	   replies_count(d.replies_count)
    {}
 
    string                        url; /// /category/@rootauthor/root_permlink#author/permlink
@@ -692,6 +693,8 @@ struct discussion : public api_comment_object
    vector< account_name_type >   reblogged_by;
    optional< account_name_type > first_reblogged_by;
    optional< time_point_sec >    first_reblogged_on;
+   //just for debug
+   uint16_t						 replies_count = 0;
 };
 
 struct tag_index
@@ -1325,7 +1328,7 @@ FC_REFLECT( gamebank::plugins::condenser_api::api_convert_request_object,
 FC_REFLECT_DERIVED( gamebank::plugins::condenser_api::discussion, (gamebank::plugins::condenser_api::api_comment_object),
              (url)(root_title)(pending_payout_value)(total_pending_payout_value)
              (active_votes)(replies)(author_reputation)(promoted)
-             (body_length)(reblogged_by)(first_reblogged_by)(first_reblogged_on)
+             (body_length)(reblogged_by)(first_reblogged_by)(first_reblogged_on)(replies_count)
           )
 
 FC_REFLECT( gamebank::plugins::condenser_api::scheduled_hardfork,
