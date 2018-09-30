@@ -45,6 +45,7 @@ class account_bandwidth_object : public object< account_bandwidth_object_type, a
       share_type        average_bandwidth;
       share_type        lifetime_bandwidth;
       time_point_sec    last_bandwidth_update;
+	  uint16_t			remain_bandwidth_percent = GAMEBANK_100_PERCENT;
 };
 
 typedef oid< account_bandwidth_object > account_bandwidth_id_type;
@@ -127,7 +128,7 @@ typedef multi_index_container <
 FC_REFLECT_ENUM( gamebank::plugins::witness::bandwidth_type, (none)(forum)(market) )
 
 FC_REFLECT( gamebank::plugins::witness::account_bandwidth_object,
-            (id)(account)(type)(average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update) )
+            (id)(account)(type)(average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update)(remain_bandwidth_percent) )
 CHAINBASE_SET_INDEX_TYPE( gamebank::plugins::witness::account_bandwidth_object, gamebank::plugins::witness::account_bandwidth_index )
 
 FC_REFLECT( gamebank::plugins::witness::reserve_ratio_object,

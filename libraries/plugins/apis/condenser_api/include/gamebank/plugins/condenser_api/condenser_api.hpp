@@ -231,7 +231,7 @@ struct extended_account : public api_account_object
    share_type                                               average_market_bandwidth;
    share_type                                               lifetime_market_bandwidth;
    time_point_sec                                           last_market_bandwidth_update;
-
+   uint16_t													remain_bandwidth_percent = GAMEBANK_100_PERCENT;
    legacy_asset                                             vesting_balance;  /// convert vesting_shares to vesting gbc
    share_type                                               reputation = 0;
    map< uint64_t, api_operation_object >   transfer_history; /// transfer to/from vesting
@@ -1224,7 +1224,7 @@ FC_REFLECT( gamebank::plugins::condenser_api::api_account_object,
           )
 
 FC_REFLECT_DERIVED( gamebank::plugins::condenser_api::extended_account, (gamebank::plugins::condenser_api::api_account_object),
-            (average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update)(average_market_bandwidth)(lifetime_market_bandwidth)(last_market_bandwidth_update)
+            (average_bandwidth)(lifetime_bandwidth)(last_bandwidth_update)(average_market_bandwidth)(lifetime_market_bandwidth)(last_market_bandwidth_update)(remain_bandwidth_percent)
             (vesting_balance)(reputation)(transfer_history)(market_history)(post_history)(vote_history)(other_history)(witness_votes)(tags_usage)(guest_bloggers)(open_orders)(comments)(feed)(blog)(recent_replies)(recommended) )
 
 FC_REFLECT( gamebank::plugins::condenser_api::api_comment_object,

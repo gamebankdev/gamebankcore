@@ -957,6 +957,7 @@ namespace detail
                   e_acct.average_bandwidth = forum_bandwidth.bandwidth->average_bandwidth;
                   e_acct.lifetime_bandwidth = forum_bandwidth.bandwidth->lifetime_bandwidth;
                   e_acct.last_bandwidth_update = forum_bandwidth.bandwidth->last_bandwidth_update;
+                  e_acct.remain_bandwidth_percent = forum_bandwidth.bandwidth->remain_bandwidth_percent;
                }
 
                auto market_bandwidth = _witness_api->get_account_bandwidth( { itr->name, witness::bandwidth_type::market } );
