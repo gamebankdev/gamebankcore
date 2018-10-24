@@ -4,6 +4,7 @@
 #include <gamebank/chain/contract/contract_user_object.hpp>
 #include <gamebank/chain/database.hpp>
 #include <gamebank/protocol/types.hpp>
+#include <gamebank/utilities/key_conversion.hpp>
 
 extern "C"
 {
@@ -75,9 +76,58 @@ static int get_block_hash(lua_State *L) {
 	return 1;
 }
 
+static int chain_is_account(lua_State *L) {
+	if (lua_gettop(L) != 1)
+	{
+		luaL_error(L, "expected 1 arg");
+		return 0;
+	}
+	if (!lua_isstring(L, 1))
+	{
+		luaL_error(L, "expected string arg");
+		return 0;
+	}
+	const char* user_name = lua_tostring(L, 1);
+	if (user_name == nullptr)
+	{
+		return 0;
+	}
+	chain::database* db = (chain::database*)(L->extend.pointer);
+	lua_pushboolean(L, db->find_account(user_name) != nullptr ? 1 : 0);
+	return 1;
+}
+
+static int chain_is_keypair(lua_State *L) {
+	if (lua_gettop(L) != 2)
+	{
+		luaL_error(L, "expected 2 arg");
+		return 0;
+	}
+	luaL_argcheck(L, lua_type(L, 1) == LUA_TSTRING, 1, "string expected");
+	luaL_argcheck(L, lua_type(L, 2) == LUA_TSTRING, 2, "string expected");
+	string pub_base58 = lua_tostring(L, 1);
+	string pri_base58 = lua_tostring(L, 2);
+	try
+	{
+		fc::optional<fc::ecc::private_key> private_key = gamebank::utilities::wif_to_key(pri_base58);
+		if (private_key->get_public_key().to_base58() == pub_base58)
+			lua_pushboolean(L, 1);
+		else
+			lua_pushboolean(L, 0);
+	}
+	catch (...)
+	{
+		luaL_error(L, "exception");
+		return 0;
+	}
+	return 1;
+}
+
 static const luaL_Reg chainlib[] = {
 	{ "head_block_num", head_block_num },
     { "get_block_hash", get_block_hash },
+	{ "is_account", chain_is_account },
+	{ "is_keypair", chain_is_keypair },
 	{ nullptr, nullptr }
 };
 

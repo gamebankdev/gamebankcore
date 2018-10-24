@@ -71,6 +71,26 @@ static int contract_get_caller(lua_State *L) {
 	return 1;
 }
 
+static int contract_get_creator(lua_State *L) {
+	if (lua_gettop(L) != 0)
+	{
+		luaL_error(L, "expected zero arg");
+		return 0;
+	}
+	const char* user_name = L->extend.contract_name;
+	chain::database* db = (chain::database*)(L->extend.pointer);
+	const contract_object* obj = db->find_contract(user_name);
+	if (obj == nullptr)
+	{
+		luaL_error(L, "expected a real contract name");
+		return 0;
+	}
+	string str_creator = obj->creator;
+	lua_pushstring(L, str_creator.c_str());
+	return 1;
+}
+
+
 static int contract_get_data_by_username(lua_State *L, const char* user_name) {
 	// todo: check is load in lua?
 	chain::database* db = (chain::database*)(L->extend.pointer);
@@ -253,13 +273,27 @@ static int contract_emit(lua_State *L) {
     return 0;
 }
 
+static int contract_jsonstr_to_table(lua_State *L) {
+	int n = lua_gettop(L);  /* number of arguments */
+	if (n != 1) {
+		luaL_error(L, "expected 1 argument");
+		return 0;
+	}
+	luaL_argcheck(L, lua_isstring(L, 1), 1, "string expected");
+	std::string jsonstr = lua_tostring(L, 1);
+	int ret = json_decode_fromstring(L, jsonstr.c_str(), jsonstr.length()); // create datatable
+	return ret;
+}
+
 static const luaL_Reg contractlib[] = {
 	{ "get_name", contract_get_name },
+    { "get_creator", contract_get_creator },
 	{ "get_caller", contract_get_caller },
 	{ "get_data", contract_get_data },
 	{ "get_user_data", contract_get_user_data },
 	{ "transfer", contract_transfer },
     { "emit", contract_emit },
+	{ "jsonstr_to_table", contract_jsonstr_to_table },
 	{ nullptr, nullptr }
 };
 

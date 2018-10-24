@@ -65,7 +65,7 @@ add_library( gamebank_chain
              ${HEADERS}
            )
 
-target_link_libraries( gamebank_chain gamebank_protocol fc chainbase gamebank_schema appbase
+target_link_libraries( gamebank_chain gamebank_protocol gamebank_utilities fc chainbase gamebank_schema appbase
                        ${PATCH_MERGE_LIB} )
 target_include_directories( gamebank_chain
                             PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"

@@ -445,45 +445,16 @@ namespace gamebank { namespace chain {
 					return false;
 				}
 				int retNum = lua_gettop(L) - oldStackPos;
-				if (retNum == 1)
+				if (retNum == 1 && lua_isstring(L, -1))
 				{
-                    switch (lua_type(L, -1))
-                    {
-                    case LUA_TNUMBER:
-                    {
-                        if (lua_isinteger(L, -1)) {
-                            result = std::to_string(lua_tointeger(L, -1));
-                        }
-                        else if (lua_isnumber(L, -1)) {
-                            result = std::to_string(lua_tonumber(L, -1));
-                        }
-                        else {
-                            FC_ASSERT(false, "contract return number error");
-                        }
-                        ilog("result number:${ret}", ("ret", result));
-                        break;
-                    }
-                    case LUA_TSTRING:
-                    {
-                        result += "\"";
-                        result += lua_tostring(L, -1);
-                        result += "\"";
-                        ilog("result string:${ret}", ("ret", result));
-                        break;
-                    }
-                    case LUA_TTABLE:
-                    {
-                        int datalen = 0;
-                        char* json = json_encode_tostring(L, &datalen);
-                        FC_ASSERT((json != nullptr) && (datalen > 0), "contract return from lua json error");
-                        result.assign(json, datalen);
-                        ilog("result table:${ret}", ("ret", result));
-                        break;
-                    }
-                    default:
-                        FC_ASSERT(false, "contract return not string or not table");
-                        return false;
-                    }
+					// todo: if is table,convert to jsonstr
+					const char* str = lua_tostring(L, -1);
+					if (str != NULL)
+					{
+						result = str;
+						//printf("result=%s\n", result.c_str());
+						ilog("result:${ret}", ("ret", str));
+					}
 				}
 				for (int i = 0; i < retNum; i++)
 				{
