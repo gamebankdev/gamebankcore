@@ -2547,6 +2547,10 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
             return true;
         if (arg_tp.is_string() && abi_tp == "string")
             return true;
+        if (arg_tp.is_object() && abi_tp == "object")
+            return true;
+        if (arg_tp.is_array() && abi_tp == "array")
+            return true;
         return false;
     };
 	try {

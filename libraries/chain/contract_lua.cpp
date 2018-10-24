@@ -387,6 +387,10 @@ namespace gamebank { namespace chain {
 						lua_pushnumber(L, arg.as_double());
 					else if (arg.is_string())
 						lua_pushstring(L, arg.as_string().c_str());
+					else if (arg.is_object())
+						lua_pushstring(L, fc::json::to_string(arg).c_str());
+					else if (arg.is_array())
+						lua_pushstring(L, fc::json::to_string(arg).c_str());
 					else if (arg.is_null())
 						lua_pushnil(L);
 					else
