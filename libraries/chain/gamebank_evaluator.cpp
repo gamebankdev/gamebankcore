@@ -2575,7 +2575,7 @@ void contract_call_evaluator::do_apply(const contract_call_operation& op)
                 FC_ASSERT(abi_args.size() == op_args.size(), "contract args num error");
                 for (size_t j = 0; j < op_args.size(); ++j)
                 {
-                    FC_ASSERT(!op_args[j].is_array(), "op abi args num ${n} array", ("n", j));
+                    //FC_ASSERT(!op_args[j].is_array(), "op abi args num ${n} array", ("n", j));
                     FC_ASSERT(check_abi(op_args[j], abi_args[j].as_string()), "contract abi args err");
                 }
             }
