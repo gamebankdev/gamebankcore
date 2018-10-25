@@ -212,7 +212,8 @@ static int contract_transfer(lua_State *L) {
 
     contract_log_operation logs;
     logs.name = L->extend.contract_name;
-    logs.data = string("{\"transfer\":[\"") + from + string("\",\"") + to + string("\",\"") + to_string(amount) + string("\"]}");
+	logs.key = "transfer";
+    logs.data = string("[\"") + from + string("\",\"") + to + string("\",\"") + to_string(amount) + string("\"]");
     db->contract_operation(logs);
 	return 0;
 }
@@ -231,44 +232,55 @@ static int contract_emit(lua_State *L) {
     }
     string key = lua_tostring(L, 1);
     string data;
-    for (uint32_t i = 2; i <= num; ++i)
-    {
-        if (i > 2) {
-            data += ",";
-        }
-        switch (lua_type(L, i))
-        {
-        case LUA_TSTRING:
-        {
-            data += "\"";
-            data += lua_tostring(L, i);
-            data += "\"";
-        }
-        break;
-        case LUA_TNUMBER:
-        {
-            if (lua_isinteger(L, i)) {
-                data += std::to_string(lua_tointeger(L, i));
-            }
-            else if (lua_isnumber(L, i)) {
-                data += std::to_string(lua_tonumber(L, i));
-            }
-            else {
-                luaL_error(L, "expected emit arg,not integer or not number");
-                return 0;
-            }
-        }
-        break;
-        default:
-            luaL_error(L, "expected emit arg,not integer and not string");
-            return 0;
-        }
-    }
+	if (num == 2 && lua_istable(L, 2))
+	{
+		int datalen = 0;
+		char* json = json_encode_tostring(L, &datalen);
+		if (json != nullptr && datalen > 0)
+			data.assign(json, datalen);
+	}
+	else
+	{
+		for (uint32_t i = 2; i <= num; ++i)
+		{
+			if (i > 2) {
+				data += ",";
+			}
+			switch (lua_type(L, i))
+			{
+			case LUA_TSTRING:
+			{
+				data += "\"";
+				data += lua_tostring(L, i);
+				data += "\"";
+			}
+			break;
+			case LUA_TNUMBER:
+			{
+				if (lua_isinteger(L, i)) {
+					data += std::to_string(lua_tointeger(L, i));
+				}
+				else if (lua_isnumber(L, i)) {
+					data += std::to_string(lua_tonumber(L, i));
+				}
+				else {
+					luaL_error(L, "expected emit arg,not integer or not number");
+					return 0;
+				}
+			}
+			break;
+			default:
+				luaL_error(L, "expected emit arg,not integer and not string");
+				return 0;
+			}
+		}
+	}
     chain::database* db = (chain::database*)(L->extend.pointer);
 
     contract_log_operation logs;
     logs.name = L->extend.contract_name;
-    logs.data = string("{\"") + key + string("\":[") + data + string("]}");
+	logs.key = key;
+    logs.data = data;
     db->contract_operation(logs);
     return 0;
 }

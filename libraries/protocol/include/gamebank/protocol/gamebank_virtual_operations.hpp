@@ -181,8 +181,9 @@ namespace gamebank { namespace protocol {
       contract_log_operation() {}
       contract_log_operation( const string& n, const string& d ) : name( n ), data( d ) {}
 
-      string           name;
-      string           data;
+      string           name; // contract name
+	  string		   key;
+      string           data; // json string
    };
 
 } } //gamebank::protocol
@@ -202,4 +203,4 @@ FC_REFLECT( gamebank::protocol::comment_payout_update_operation, (author)(permli
 FC_REFLECT( gamebank::protocol::return_vesting_delegation_operation, (account)(vesting_shares) )
 FC_REFLECT( gamebank::protocol::comment_benefactor_reward_operation, (benefactor)(author)(permlink)(reward) )
 FC_REFLECT( gamebank::protocol::producer_reward_operation, (producer)(vesting_shares) )
-FC_REFLECT( gamebank::protocol::contract_log_operation, (name)(data) );
+FC_REFLECT( gamebank::protocol::contract_log_operation, (name)(key)(data) );
