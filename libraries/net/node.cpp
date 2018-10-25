@@ -536,6 +536,7 @@ namespace graphene { namespace net {
 
       std::list<fc::future<void> > _handle_message_calls_in_progress;
       std::set<message_hash_type> _message_ids_currently_being_processed;
+      std::set<message_hash_type> _message_ids_added_for_fetch;
 
       std::atomic_int        _activeCalls;
       fc::promise<void>::ptr _shutdownNotifier;
@@ -2908,10 +2909,17 @@ namespace graphene { namespace net {
            ( "count", item_ids_inventory_message_received.item_hashes_available.size() )("endpoint", originating_peer->get_remote_endpoint() ) );
       for( const item_hash_t& item_hash : item_ids_inventory_message_received.item_hashes_available )
       {
+        if (_message_ids_added_for_fetch.find(item_hash) != _message_ids_added_for_fetch.end())
+          continue;
+        
         if (_message_ids_currently_being_processed.find(item_hash) != _message_ids_currently_being_processed.end())
           // we're in the middle of processing this item, no need to fetch it again
           continue;
         item_id advertised_item_id(item_ids_inventory_message_received.item_type, item_hash);
+        //ilog("on_item_ids_inventory_message item_type:${type}", ("type", item_ids_inventory_message_received.item_type));
+        if (_delegate->has_item(advertised_item_id)) {
+            continue;
+        }
 
         if (_new_inventory.find(advertised_item_id) != _new_inventory.end())
           // we've processed this item but haven't advertised it to our peers yet, don't fetch it again
@@ -2953,6 +2961,9 @@ namespace graphene { namespace net {
               auto items_to_fetch_iter = _items_to_fetch.get<item_id_index>().find(advertised_item_id);
               if (items_to_fetch_iter == _items_to_fetch.get<item_id_index>().end())
               {
+                    if (item_ids_inventory_message_received.item_type ==  graphene::net::block_message_type || item_ids_inventory_message_received.item_type ==  graphene::net::confirm_message_type) {
+                        _message_ids_added_for_fetch.insert(item_hash);
+                    }
                 // it's new to us
                 _items_to_fetch.insert(prioritized_item_id(advertised_item_id, _items_to_fetch_sequence_counter++));
                 dlog("adding item ${item_hash} from inventory message to our list of items to fetch",
@@ -3477,6 +3488,7 @@ namespace graphene { namespace net {
                   ("peer", originating_peer->get_remote_endpoint())("id", message_hash));
           _delegate->handle_block(block_message_to_process, false, contained_transaction_message_ids);
           _message_ids_currently_being_processed.erase(message_hash);
+          _message_ids_added_for_fetch.erase(message_hash);
           message_validated_time = fc::time_point::now();
           ilog("Successfully pushed block ${num} (id:${id})",
                 ("num", block_message_to_process.block.block_num())
