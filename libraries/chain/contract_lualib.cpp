@@ -219,62 +219,22 @@ static int contract_transfer(lua_State *L) {
 }
 
 static int contract_emit(lua_State *L) {
-    int32_t num = lua_gettop(L);
-    if (num <= 1)
-    {
-        luaL_error(L, "expected 1 arg");
-        return 0;
-    }
-    if (!lua_isstring(L, 1))
-    {
-        luaL_error(L, "expected string arg");
-        return 0;
-    }
+    int32_t n = lua_gettop(L);
+	if (n != 2)
+	{
+		luaL_error(L, "expected 2 argument");
+		return 0;
+	}
+	luaL_argcheck(L, lua_type(L, 1) == LUA_TSTRING, 1, "string expected");
+	luaL_argcheck(L, lua_type(L, 2) == LUA_TTABLE, 2, "table expected");
+
     string key = lua_tostring(L, 1);
     string data;
-	if (num == 2 && lua_istable(L, 2))
-	{
-		int datalen = 0;
-		char* json = json_encode_tostring(L, &datalen);
-		if (json != nullptr && datalen > 0)
-			data.assign(json, datalen);
-	}
-	else
-	{
-		for (uint32_t i = 2; i <= num; ++i)
-		{
-			if (i > 2) {
-				data += ",";
-			}
-			switch (lua_type(L, i))
-			{
-			case LUA_TSTRING:
-			{
-				data += "\"";
-				data += lua_tostring(L, i);
-				data += "\"";
-			}
-			break;
-			case LUA_TNUMBER:
-			{
-				if (lua_isinteger(L, i)) {
-					data += std::to_string(lua_tointeger(L, i));
-				}
-				else if (lua_isnumber(L, i)) {
-					data += std::to_string(lua_tonumber(L, i));
-				}
-				else {
-					luaL_error(L, "expected emit arg,not integer or not number");
-					return 0;
-				}
-			}
-			break;
-			default:
-				luaL_error(L, "expected emit arg,not integer and not string");
-				return 0;
-			}
-		}
-	}
+	int datalen = 0;
+	char* json = json_encode_tostring(L, &datalen);
+	if (json != nullptr && datalen > 0)
+		data.assign(json, datalen);
+
     chain::database* db = (chain::database*)(L->extend.pointer);
 
     contract_log_operation logs;
