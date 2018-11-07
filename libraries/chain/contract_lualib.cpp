@@ -92,19 +92,31 @@ static int contract_get_creator(lua_State *L) {
 
 
 static int contract_get_data_by_username(lua_State *L, const char* user_name) {
-	// todo: check is load in lua?
-	chain::database* db = (chain::database*)(L->extend.pointer);
-	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
-	std::string data = contract_data ? to_string(contract_data->data) : "{}";
-	ilog("read contract_data ${contract_name}.${user_name}:${data}", ("contract_name", L->extend.contract_name)("user_name", user_name)("data", data));
-	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
-
 	int check_top = lua_gettop(L);
 	lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
 	if (!lua_istable(L, -1)) {
 		luaL_error(L, "_contract_modified_data must be a table");
 		return 0;
 	}
+	lua_getfield(L, -1, user_name);
+	if (lua_istable(L, -1)) // check if the table has already exist
+	{
+		return 1; // return TRACT_MODIFIED_DATA_TABLE_NAME[user_name]
+	}
+	lua_pop(L, 2); // pop LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME and LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME[user_name]
+	if (!(check_top == lua_gettop(L))) {
+		luaL_error(L, "lua stack error");
+		return 0;
+	}
+
+	chain::database* db = (chain::database*)(L->extend.pointer);
+	auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
+	std::string data = contract_data ? to_string(contract_data->data) : "{}";
+	//ilog("read contract_data ${contract_name}.${user_name}:${data}", ("contract_name", L->extend.contract_name)("user_name", user_name)("data", data));
+	int ret = json_decode_fromstring(L, data.c_str(), data.length()); // create datatable
+
+	check_top = lua_gettop(L);
+	lua_getglobal(L, LUA_CONTRACT_MODIFIED_DATA_TABLE_NAME);
 	lua_pushstring(L, user_name);
 	lua_pushvalue(L, -3); // push datatable to top
 	lua_rawset(L, -3); // _contract_modified_data[contract_name] = datatable

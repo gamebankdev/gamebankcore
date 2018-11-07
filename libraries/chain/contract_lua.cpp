@@ -449,15 +449,35 @@ namespace gamebank { namespace chain {
 					return false;
 				}
 				int retNum = lua_gettop(L) - oldStackPos;
-				if (retNum == 1 && lua_isstring(L, -1))
+				if (retNum == 1 )
 				{
-					// todo: if is table,convert to jsonstr
-					const char* str = lua_tostring(L, -1);
-					if (str != NULL)
+					if (lua_isstring(L, -1))
 					{
-						result = str;
-						//printf("result=%s\n", result.c_str());
-						ilog("result:${ret}", ("ret", str));
+						const char* str = lua_tostring(L, -1);
+						if (str != NULL)
+						{
+							result = str;
+							//printf("result=%s\n", result.c_str());
+							ilog("resultstr:${ret}", ("ret", str));
+						}
+					}
+					else if (lua_istable(L, -1))
+					{
+						int datalen = 0;
+						char* json = json_encode_tostring(L, &datalen);
+						if (json != nullptr && datalen > 0)
+						{
+							result.assign(json, datalen);
+							ilog("resultjson:${ret}", ("ret", result));
+						}
+						else
+						{
+							elog("resultjson:datalen=0");
+						}
+					}
+					else
+					{
+						elog("error return type:${type}", ("type", lua_type(L,-1)));
 					}
 				}
 				for (int i = 0; i < retNum; i++)
@@ -488,7 +508,7 @@ namespace gamebank { namespace chain {
 					int datalen = 0;
 					char* json = json_encode_tostring(L, &datalen);
 					FC_ASSERT((json != nullptr) && (datalen > 0), "get user data from lua error");
-					ilog("save contract_data ${contract_name}.${user_name}:${data}", ("contract_name", L->extend.contract_name)("user_name", user_name)("data", json));
+					//ilog("save contract_data ${contract_name}.${user_name}:${datalen}", ("contract_name", L->extend.contract_name)("user_name", user_name)("datalen", datalen));
 
 					auto contract_data = db->find<contract_user_object, by_contract_user>(boost::make_tuple(L->extend.contract_name, user_name));
 					if (contract_data == nullptr) {
